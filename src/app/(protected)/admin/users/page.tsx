@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Plus, RefreshCcw } from "lucide-react";
 import UsersTable from "@/components/admin/users/UsersTable";
 import AddUserDialog from "@/components/admin/users/AddUserDialog";
-
+import LoaderOverlay from "@/components/ui/LoaderOverlay";
 export default function UsersPage() {
     const [query, setQuery] = React.useState("");
     const [openAdd, setOpenAdd] = React.useState(false);
@@ -24,7 +24,7 @@ export default function UsersPage() {
         setLoading(true);
         try {
             const res = await api<any>(`/api/admin/users?page=${page}&pageSize=${pageSize}&sort=${encodeURIComponent(sort)}&q=${encodeURIComponent(q)}`);
-            console.log("api respones",res)
+            console.log("api respones", res)
             setData(res);
         } catch (e: any) {
             toast.error(e.message || "Failed to load users");
@@ -39,36 +39,37 @@ export default function UsersPage() {
 
     return (
         <div className="flex flex-col gap-4">
-            <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <Users className="h-5 w-5" />
-                        <CardTitle>Users</CardTitle>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Input placeholder="Search name, email, phone…" value={query} onChange={(e) => setQuery(e.target.value)} className="w-64" />
-                        <Button variant="outline" onClick={() => setRefreshKey((k) => k + 1)} disabled={loading}>
-                            <RefreshCcw className="h-4 w-4 mr-2" /> Refresh
-                        </Button>
-                        <Button onClick={() => setOpenAdd(true)}>
-                            <Plus className="h-4 w-4 mr-2" /> Add User
-                        </Button>
-                    </div>
-                </CardHeader>
-                <CardContent>
-                    <UsersTable
-                        rows={data.items}
-                        pagination={data.pagination}
-                        sort={data.sort}
-                        loading={loading}
-                        onPageChange={(p: any) => fetchUsers(p)}
-                        onPageSizeChange={(ps: any) => fetchUsers(1, ps)}
-                        onSortChange={(s: any) => fetchUsers(1, data.pagination.pageSize, s)}
-                        onChanged={() => setRefreshKey((k) => k + 1)}
-                    />
-                </CardContent>
-            </Card>
-
+            {loading ? (<div><LoaderOverlay label="Fetching users..." /> </div>) : (
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <Users className="h-5 w-5" />
+                            <CardTitle>Users</CardTitle>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Input placeholder="Search name, email, phone…" value={query} onChange={(e) => setQuery(e.target.value)} className="w-64" />
+                            <Button variant="outline" onClick={() => setRefreshKey((k) => k + 1)} disabled={loading}>
+                                <RefreshCcw className="h-4 w-4 mr-2" /> Refresh
+                            </Button>
+                            <Button onClick={() => setOpenAdd(true)}>
+                                <Plus className="h-4 w-4 mr-2" /> Add User
+                            </Button>
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        <UsersTable
+                            rows={data.items}
+                            pagination={data.pagination}
+                            sort={data.sort}
+                            loading={loading}
+                            onPageChange={(p: any) => fetchUsers(p)}
+                            onPageSizeChange={(ps: any) => fetchUsers(1, ps)}
+                            onSortChange={(s: any) => fetchUsers(1, data.pagination.pageSize, s)}
+                            onChanged={() => setRefreshKey((k) => k + 1)}
+                        />
+                    </CardContent>
+                </Card>
+            )}
             <AddUserDialog open={openAdd} onOpenChange={setOpenAdd} onCreated={() => setRefreshKey((k) => k + 1)} />
         </div>
     );

@@ -3,9 +3,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { ok, fail } from "@/lib/responses";
 import { getTokenFromReq, verifyJwt } from "@/lib/auth";
+import { id } from "zod/v4/locales";
 
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
-  const user = await prisma.user.findUnique({ where: { id: Number(params.id) } });
+  const { id } = await params;
+  if (!id) return NextResponse.json(fail("please send the id"), { status: 404 });
+  const user = await prisma.user.findUnique({ where: { id: Number(id) } });
   if (!user) return NextResponse.json(fail("Not found"), { status: 404 });
   return NextResponse.json(ok(user));
 }
