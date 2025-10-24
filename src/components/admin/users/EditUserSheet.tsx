@@ -1,15 +1,22 @@
-// ==========================
-// COMPONENTS – EDIT USER
-// ==========================
-// File: components/admin/users/EditUserSheet.tsx
 "use client";
 import * as React from "react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import UserForm from "../forms/UserForm";
+import LoaderOverlay from "@/components/ui/LoaderOverlay";
+import UserEditForm from "../forms/UserEditForm";
 
-export default function EditUserSheet({ id, open, onOpenChange, onUpdated }: { id: number | null; open: boolean; onOpenChange: (v: boolean) => void; onUpdated: () => void }) {
+export default function EditUserSheet({
+  id,
+  open,
+  onOpenChange,
+  onUpdated,
+}: {
+  id: number | null;
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  onUpdated: () => void;
+}) {
   const [init, setInit] = React.useState<any | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
@@ -25,32 +32,38 @@ export default function EditUserSheet({ id, open, onOpenChange, onUpdated }: { i
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-lg">
-        <SheetHeader>
+      <SheetContent className="sm:max-w-2xl p-0">
+        <SheetHeader className="p-5 border-b">
           <SheetTitle>Edit User</SheetTitle>
         </SheetHeader>
-        {init && (
-          <UserForm
-            mode="edit"
-            initial={init}
-            onSubmit={async (values) => {
-              if (!id) return;
-              setSubmitting(true);
-              try {
-                await api(`/api/admin/users/${id}`, { method: "PATCH", body: JSON.stringify(values) });
-                toast.success("User updated");
-                onOpenChange(false);
-                onUpdated();
-              } catch (e: any) {
-                toast.error(e.message || "Failed to update");
-              } finally {
-                setSubmitting(false);
+
+        <div className="relative h-[calc(100vh-8rem)] overflow-y-auto px-5 pb-10">
+          {loading && (
+            <LoaderOverlay label="Loading user details..." className="bg-background/70" />
+          )}
+
+          {init && (
+            <UserEditForm
+              initial={init}
+              onSubmit={(values) => {
+                api(`/api/admin/users/${id}`, {
+                  method: "PATCH",
+                  body: JSON.stringify({
+                    ...values,
+                    // map newPassword -> password if your API expects `passwordHash` server-side
+                    password: values.newPassword || undefined,
+                  }),
+
+                })
+                onUpdated()
               }
-            }}
-            submitting={submitting}
-          />
-        )}
-        {loading && <div className="text-sm text-muted-foreground">Loading…</div>}
+              }
+              submitting={submitting}
+              lockIdentity
+            />
+
+          )}
+        </div>
       </SheetContent>
     </Sheet>
   );
