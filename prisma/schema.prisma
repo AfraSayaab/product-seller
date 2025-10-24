@@ -1,0 +1,412 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = "mysql://superuser:superuser%40123@104.198.145.135:3306/dazzleandbloom"
+}
+
+// ---------- ENUMS ----------
+enum Role {
+  USER
+  ADMIN
+}
+
+enum ListingStatus {
+  DRAFT
+  PENDING // awaiting moderation
+  ACTIVE
+  PAUSED
+  SOLD
+  EXPIRED
+  REJECTED
+  ARCHIVED
+}
+
+enum Condition {
+  NEW
+  LIKE_NEW
+  USED
+  FOR_PARTS
+}
+
+enum Currency {
+  PKR
+  USD
+  EUR
+  GBP
+  AED
+  INR
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+  EXPIRED
+  PAST_DUE
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+  CANCELED
+}
+
+enum OrderType {
+  PLAN
+  BOOST
+}
+
+enum PaymentProvider {
+  STRIPE
+  CHECKOUT
+  PAYPAL
+  JAZZCASH
+  EASYPAISA
+  MANUAL
+}
+
+enum BoostType {
+  BUMP
+  FEATURED
+  URGENT
+  TOP
+}
+
+enum ReportStatus {
+  OPEN
+  UNDER_REVIEW
+  ACTION_TAKEN
+  DISMISSED
+}
+
+enum ReportReason {
+  SPAM
+  DUPLICATE
+  WRONG_CATEGORY
+  PROHIBITED
+  FRAUD
+  OFFENSIVE
+  OTHER
+}
+
+// ---------- CORE MODELS ----------
+model User {
+  id           Int    @id @default(autoincrement())
+  username     String @unique
+  email        String @unique
+  phone        String @unique
+  passwordHash String
+
+  // First login & verification
+  isVerified   Boolean   @default(false)
+  isFirstLogin Boolean   @default(true)
+  lastLogin    DateTime? @db.Timestamp(6)
+
+  // Names & identity
+  firstName       String? @db.VarChar(100)
+  lastName        String? @db.VarChar(100)
+  nickname        String  @default("")
+  displayPublicAs String? @db.VarChar(100)
+
+  // Contact & social
+  website       String? @db.VarChar(255)
+  whatsapp      String? @db.VarChar(50)
+  biography     String? @db.Text
+  publicAddress String? @db.VarChar(255)
+  facebook      String? @db.VarChar(255)
+  twitter       String? @db.VarChar(255)
+  linkedin      String? @db.VarChar(255)
+  pinterest     String? @db.VarChar(255)
+  behance       String? @db.VarChar(255)
+  dribbble      String? @db.VarChar(255)
+  instagram     String? @db.VarChar(255)
+  youtube       String? @db.VarChar(255)
+  vimeo         String? @db.VarChar(255)
+  flickr        String? @db.VarChar(255)
+
+  // System fields
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  listings      Listing[]
+  subscriptions Subscription[]
+  orders        Order[]
+  favorites     Favorite[]
+  threadsBuyer  MessageThread[] @relation("BuyerThreads")
+  threadsSeller MessageThread[] @relation("SellerThreads")
+  messages      Message[]
+  reports       Report[]        @relation("Reporter")
+  
+  BoostPurchase BoostPurchase[]
+
+  @@index([email])
+  @@index([phone])
+}
+
+model Category {
+  id              Int     @id @default(autoincrement())
+  name            String
+  slug            String  @unique
+  parentId        Int?
+  isActive        Boolean @default(true)
+  // JSON schema describing expected attributes (e.g., brand, model, RAM)
+  attributeSchema Json?
+
+  // Relations
+  parent   Category?  @relation("CategoryToSub", fields: [parentId], references: [id])
+  children Category[] @relation("CategoryToSub")
+  listings Listing[]
+
+  @@index([parentId])
+  @@index([slug])
+}
+
+model Location {
+  id      Int      @id @default(autoincrement())
+  country String   @db.VarChar(2) // ISO2
+  state   String?  @db.VarChar(100)
+  city    String   @db.VarChar(120)
+  area    String?  @db.VarChar(120)
+  lat     Decimal? @db.Decimal(10, 7)
+  lng     Decimal? @db.Decimal(10, 7)
+
+  listings Listing[]
+
+  @@index([country, state, city])
+  @@index([lat, lng])
+}
+
+model Listing {
+  id         Int  @id @default(autoincrement())
+  userId     Int
+  categoryId Int
+  locationId Int?
+
+  title       String    @db.VarChar(180)
+  slug        String    @unique
+  description String    @db.Text
+  price       Decimal   @db.Decimal(12, 2)
+  currency    Currency  @default(PKR)
+  condition   Condition
+  negotiable  Boolean   @default(true)
+
+  // dynamic per-category fields (e.g., car: km, year; phone: storage)
+  attributes Json?
+
+  status         ListingStatus @default(PENDING)
+  isPhoneVisible Boolean       @default(true)
+
+  // Lifecycle
+  publishedAt   DateTime?
+  expiresAt     DateTime? @default(dbgenerated("NULL")) // will be set on publish
+  featuredUntil DateTime?
+  bumpedAt      DateTime?
+  deletedAt     DateTime?
+
+  // Metrics
+  viewsCount       Int @default(0)
+  favoritesCount   Int @default(0)
+  phoneRevealCount Int @default(0)
+
+  isVerified Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user      User            @relation(fields: [userId], references: [id])
+  category  Category        @relation(fields: [categoryId], references: [id])
+  location  Location?       @relation(fields: [locationId], references: [id])
+  images    ListingImage[]
+  boosts    BoostPurchase[]
+  favorites Favorite[]
+  threads   MessageThread[]
+  reports   Report[]        @relation("ListingReports")
+
+  @@index([userId])
+  @@index([categoryId, status])
+  @@index([status, publishedAt])
+  @@index([expiresAt])
+  @@index([featuredUntil])
+  @@index([bumpedAt])
+  @@index([deletedAt])
+  @@fulltext([title, description]) // MySQL 8+ InnoDB fulltext
+}
+
+model ListingImage {
+  id        Int      @id @default(autoincrement())
+  listingId Int
+  url       String   @db.VarChar(1024)
+  sortOrder Int      @default(0)
+  isPrimary Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  listing Listing @relation(fields: [listingId], references: [id])
+
+  @@index([listingId, sortOrder])
+}
+
+model Favorite {
+  userId    Int
+  listingId Int
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id])
+  listing Listing @relation(fields: [listingId], references: [id])
+
+  @@id([userId, listingId])
+  @@index([listingId])
+}
+
+// ---------- MONETIZATION: PLANS / SUBSCRIPTIONS / ORDERS / BOOSTS ----------
+model Plan {
+  id                    Int      @id @default(autoincrement())
+  name                  String
+  slug                  String   @unique
+  description           String?  @db.Text
+  price                 Decimal  @db.Decimal(12, 2)
+  currency              Currency @default(PKR)
+  durationDays          Int // e.g., 30
+  maxActiveListings     Int // overall cap
+  quotaListings         Int // how many new listings can be published in period
+  quotaPhotosPerListing Int      @default(10)
+  quotaBumps            Int      @default(0)
+  quotaFeaturedDays     Int      @default(0)
+  isActive              Boolean  @default(true)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  subscriptions Subscription[]
+
+  @@index([isActive])
+  @@index([price])
+}
+
+model Subscription {
+  id                    Int                @id @default(autoincrement())
+  userId                Int
+  planId                Int
+  status                SubscriptionStatus @default(ACTIVE)
+  startAt               DateTime           @default(now())
+  endAt                 DateTime
+  canceledAt            DateTime?
+  // Quotas tracked at runtime
+  remainingListings     Int
+  remainingBumps        Int                @default(0)
+  remainingFeaturedDays Int                @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user  User    @relation(fields: [userId], references: [id])
+  plan  Plan    @relation(fields: [planId], references: [id])
+  Order Order[]
+
+  @@index([userId, status, endAt])
+  @@index([planId])
+}
+
+model Order {
+  id          Int             @id @default(autoincrement())
+  userId      Int
+  type        OrderType
+  status      OrderStatus     @default(PENDING)
+  amount      Decimal         @db.Decimal(12, 2)
+  currency    Currency        @default(PKR)
+  provider    PaymentProvider
+  providerRef String?         @db.VarChar(255) // e.g., payment intent id
+  metadata    Json?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  // Optional links
+  subscriptionId Int?
+  boostId        Int? @unique
+
+  user         User           @relation(fields: [userId], references: [id])
+  subscription Subscription?  @relation(fields: [subscriptionId], references: [id])
+  boost        BoostPurchase? @relation(fields: [boostId], references: [id])
+
+  @@index([userId, status, createdAt])
+  @@index([provider, providerRef])
+}
+
+model BoostPurchase {
+  id        Int       @id @default(autoincrement())
+  listingId Int
+  userId    Int
+  type      BoostType
+  startAt   DateTime  @default(now())
+  endAt     DateTime
+  order     Order?
+  orderId   Int?
+
+  createdAt DateTime @default(now())
+
+  listing Listing @relation(fields: [listingId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@index([listingId, type, startAt])
+  @@index([endAt])
+}
+
+// ---------- MESSAGING ----------
+model MessageThread {
+  id               Int      @id @default(autoincrement())
+  listingId        Int
+  buyerId          Int
+  sellerId         Int
+  lastMessageAt    DateTime @default(now())
+  archivedByBuyer  Boolean  @default(false)
+  archivedBySeller Boolean  @default(false)
+
+  listing  Listing   @relation(fields: [listingId], references: [id])
+  buyer    User      @relation("BuyerThreads", fields: [buyerId], references: [id])
+  seller   User      @relation("SellerThreads", fields: [sellerId], references: [id])
+  messages Message[]
+
+  // one thread per buyer<->seller per listing
+  @@unique([listingId, buyerId, sellerId])
+  @@index([buyerId, lastMessageAt])
+  @@index([sellerId, lastMessageAt])
+}
+
+model Message {
+  id        Int       @id @default(autoincrement())
+  threadId  Int
+  senderId  Int
+  body      String    @db.Text
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  thread MessageThread @relation(fields: [threadId], references: [id])
+  sender User          @relation(fields: [senderId], references: [id])
+
+  @@index([threadId, createdAt])
+  @@index([senderId])
+}
+
+
+model Report {
+  id         Int          @id @default(autoincrement())
+  listingId  Int
+  reporterId Int
+  reason     ReportReason
+  details    String?      @db.Text
+  status     ReportStatus @default(OPEN)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  listing  Listing @relation("ListingReports", fields: [listingId], references: [id])
+  reporter User    @relation("Reporter", fields: [reporterId], references: [id])
+
+  @@index([listingId, status])
+  @@index([reporterId])
+}
