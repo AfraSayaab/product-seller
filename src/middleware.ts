@@ -21,7 +21,7 @@ export async function middleware(req: NextRequest) {
   const path = url.pathname;
 
   const isProtected =
-    path.startsWith("/dashboard") || path.startsWith("/profile");
+    path.startsWith("/admin") || path.startsWith("/profile");
   const isAdminOnly = path.startsWith(ADMIN_PATH);
 
   if (!isProtected) return NextResponse.next();
@@ -32,7 +32,7 @@ export async function middleware(req: NextRequest) {
   }
 
   const payload = await verifyJwtEdge(token);
-  console.log(token,payload)
+  console.log(" payload is ", payload)
   if (!payload) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
@@ -45,5 +45,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/profile"],
+  matcher: ["/admin/:path*", "/user/:path*" ,"/profile"],
 };

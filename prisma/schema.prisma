@@ -143,26 +143,30 @@ model User {
   threadsSeller MessageThread[] @relation("SellerThreads")
   messages      Message[]
   reports       Report[]        @relation("Reporter")
-  
+
   BoostPurchase BoostPurchase[]
+  category      Category[]
 
   @@index([email])
   @@index([phone])
 }
 
 model Category {
-  id              Int     @id @default(autoincrement())
+  id              Int      @id @default(autoincrement())
   name            String
-  slug            String  @unique
+  slug            String   @unique
   parentId        Int?
-  isActive        Boolean @default(true)
-  // JSON schema describing expected attributes (e.g., brand, model, RAM)
+  isActive        Boolean  @default(true)
+  image           String?
+  createdById     Int
+  createdAt       DateTime @default(now())
   attributeSchema Json?
 
   // Relations
-  parent   Category?  @relation("CategoryToSub", fields: [parentId], references: [id])
-  children Category[] @relation("CategoryToSub")
-  listings Listing[]
+  parent    Category?  @relation("CategoryToSub", fields: [parentId], references: [id])
+  children  Category[] @relation("CategoryToSub")
+  listings  Listing[]
+  createdBy User       @relation(fields: [createdById], references: [id])
 
   @@index([parentId])
   @@index([slug])
@@ -392,7 +396,6 @@ model Message {
   @@index([threadId, createdAt])
   @@index([senderId])
 }
-
 
 model Report {
   id         Int          @id @default(autoincrement())
