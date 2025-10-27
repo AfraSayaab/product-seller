@@ -47,7 +47,7 @@ export const CategoryService = {
       }),
     ]);
 
-    return { total, page, pageSize, items };
+    return { pagination: { total,  page, pageSize , totalPages: Math.max(1, Math.ceil(total / pageSize))}, items};
   },
 
   async getById(id: number) {
