@@ -8,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
 import ImageFileUploader from "@/components/uploader/ImageFileUploader";
-
+import ParentCategorySelect from "@/components/CategorySelector";
 // ─────────────────────────────────────────────────────────────
 // Schema (attributeSchema removed; backend receives {})
 // ─────────────────────────────────────────────────────────────
@@ -46,7 +46,12 @@ export default function CategoryCreateForm({
   onCancel?: () => void;
 }) {
   const [submitting, setSubmitting] = React.useState(false);
+  const [parentIdNum, setParentIdNum] = React.useState<number | null>(null);
 
+  React.useEffect(() => {
+    // keep RHF field in sync as string|null for your payload conversion
+    setValue("parentId", parentIdNum !== null ? String(parentIdNum) : "");
+  }, [parentIdNum]);
   const {
     register,
     handleSubmit,
@@ -113,131 +118,129 @@ export default function CategoryCreateForm({
 
   return (
     <div className="mx-auto w-full max-w-2xl">
-   
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-          {/* Name */}
-          <div className="space-y-1.5">
-            <label htmlFor="name" className="block text-sm font-medium text-gray-900">
-              Name
-            </label>
+
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+        {/* Name */}
+        <div className="space-y-1.5">
+          <label htmlFor="name" className="block text-sm font-medium text-gray-900">
+            Name
+          </label>
+          <input
+            id="name"
+            type="text"
+            autoComplete="off"
+            disabled={submitting}
+            className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 shadow-sm outline-none transition focus:border-gray-900 focus:ring-1 focus:ring-gray-900 disabled:opacity-60"
+            placeholder="e.g. Laptops"
+            {...register("name")}
+          />
+          {errors.name && (
+            <p className="text-xs text-red-600">{errors.name.message}</p>
+          )}
+          <p className="text-xs text-gray-500">Shown in lists and navigation.</p>
+        </div>
+
+        {/* Slug */}
+        <div className="space-y-1.5">
+          <label htmlFor="slug" className="block text-sm font-medium text-gray-900">
+            Slug
+          </label>
+          <input
+            id="slug"
+            type="text"
+            autoComplete="off"
+            disabled={submitting}
+            className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 shadow-sm outline-none transition focus:border-gray-900 focus:ring-1 focus:ring-gray-900 disabled:opacity-60"
+            placeholder="laptops"
+            {...register("slug")}
+          />
+          {errors.slug && (
+            <p className="text-xs text-red-600">{errors.slug.message}</p>
+          )}
+          <p className="text-xs text-gray-500">Lowercase, numbers, and hyphens only.</p>
+        </div>
+
+        {/* Parent ID */}
+        <div className="space-y-1.5">
+          <label className="block text-sm font-medium text-gray-900">Parent Category (optional)</label>
+          <ParentCategorySelect
+            value={parentIdNum}
+            onChange={(id) => setParentIdNum(id)}   // returns number|null
+            excludeId={undefined /* e.g., current editing id to prevent self-parenting */}
+            pageSize={20}
+            debounceMs={300}
+            placeholder="Search categories…"
+            allowClear
+            disabled={submitting}
+            className="w-full"
+          // apiPath="/api/admin/categories" // default
+          // mapItemLabel={(i) => `${i.name}`}
+          />
+          <p className="text-xs text-gray-500">Leave empty for a top-level category.</p>
+          {errors.parentId && <p className="text-xs text-red-600">{errors.parentId.message}</p>}
+        </div>
+        {/* Active toggle */}
+        <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+          <div>
+            <p className="text-sm font-medium text-gray-900">Active</p>
+            <p className="text-xs text-gray-500">Inactive categories are hidden from users.</p>
+          </div>
+          <label className="relative inline-flex cursor-pointer items-center">
             <input
-              id="name"
-              type="text"
-              autoComplete="off"
+              type="checkbox"
+              className="peer sr-only"
               disabled={submitting}
-              className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 shadow-sm outline-none transition focus:border-gray-900 focus:ring-1 focus:ring-gray-900 disabled:opacity-60"
-              placeholder="e.g. Laptops"
-              {...register("name")}
+              {...register("isActive")}
             />
-            {errors.name && (
-              <p className="text-xs text-red-600">{errors.name.message}</p>
+            <div className="h-6 w-11 rounded-full bg-gray-300 transition peer-checked:bg-gray-900 peer-focus:outline-none"></div>
+            <div className="absolute left-1 top-1 h-4 w-4 rounded-full bg-white transition peer-checked:translate-x-5"></div>
+          </label>
+        </div>
+
+        {/* Image (single) */}
+        <div className="space-y-1.5">
+          <label className="block text-sm font-medium text-gray-900">Image (optional)</label>
+
+          <ImageFileUploader
+            label=""
+            helperText="JPEG/PNG/WebP up to 5MB"
+            mode="single"
+            accept={["image/*"]}
+            maxSizeMB={5}
+            folder="products/hero"
+            defaultValue={null}
+            onChange={(v: any) => setValue("image", v)}
+          />
+          <p className="text-xs text-gray-500">Recommended: square image (e.g., 800×800).</p>
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center justify-end gap-3 pt-2">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={submitting}
+            className="inline-flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-900 shadow-sm transition hover:bg-gray-50 disabled:opacity-60"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={submitting}
+            className="inline-flex items-center rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-black disabled:opacity-60"
+          >
+            {submitting && (
+              <svg className="mr-2 h-4 w-4 animate-spin" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+              </svg>
             )}
-            <p className="text-xs text-gray-500">Shown in lists and navigation.</p>
-          </div>
+            {submitting ? "Creating…" : "Create"}
+          </button>
+        </div>
+      </form>
 
-          {/* Slug */}
-          <div className="space-y-1.5">
-            <label htmlFor="slug" className="block text-sm font-medium text-gray-900">
-              Slug
-            </label>
-            <input
-              id="slug"
-              type="text"
-              autoComplete="off"
-              disabled={submitting}
-              className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 shadow-sm outline-none transition focus:border-gray-900 focus:ring-1 focus:ring-gray-900 disabled:opacity-60"
-              placeholder="laptops"
-              {...register("slug")}
-            />
-            {errors.slug && (
-              <p className="text-xs text-red-600">{errors.slug.message}</p>
-            )}
-            <p className="text-xs text-gray-500">Lowercase, numbers, and hyphens only.</p>
-          </div>
-
-          {/* Parent ID */}
-          <div className="space-y-1.5">
-            <label htmlFor="parentId" className="block text-sm font-medium text-gray-900">
-              Parent ID (optional)
-            </label>
-            <input
-              id="parentId"
-              type="text"
-              inputMode="numeric"
-              autoComplete="off"
-              disabled={submitting}
-              className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 shadow-sm outline-none transition focus:border-gray-900 focus:ring-1 focus:ring-gray-900 disabled:opacity-60"
-              placeholder="Numeric ID"
-              {...register("parentId")}
-            />
-            {errors.parentId && (
-              <p className="text-xs text-red-600">{errors.parentId.message}</p>
-            )}
-            <p className="text-xs text-gray-500">Leave empty for a top-level category.</p>
-          </div>
-
-          {/* Active toggle */}
-          <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
-            <div>
-              <p className="text-sm font-medium text-gray-900">Active</p>
-              <p className="text-xs text-gray-500">Inactive categories are hidden from users.</p>
-            </div>
-            <label className="relative inline-flex cursor-pointer items-center">
-              <input
-                type="checkbox"
-                className="peer sr-only"
-                disabled={submitting}
-                {...register("isActive")}
-              />
-              <div className="h-6 w-11 rounded-full bg-gray-300 transition peer-checked:bg-gray-900 peer-focus:outline-none"></div>
-              <div className="absolute left-1 top-1 h-4 w-4 rounded-full bg-white transition peer-checked:translate-x-5"></div>
-            </label>
-          </div>
-
-          {/* Image (single) */}
-          <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-gray-900">Image (optional)</label>
-
-            <ImageFileUploader
-              label=""
-              helperText="JPEG/PNG/WebP up to 5MB"
-              mode="single"
-              accept={["image/*"]}
-              maxSizeMB={5}
-              folder="products/hero"
-              defaultValue={null}
-              onChange={(v: any) => setValue("image", v)}
-            />
-            <p className="text-xs text-gray-500">Recommended: square image (e.g., 800×800).</p>
-          </div>
-
-          {/* Actions */}
-          <div className="flex items-center justify-end gap-3 pt-2">
-            <button
-              type="button"
-              onClick={onCancel}
-              disabled={submitting}
-              className="inline-flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-900 shadow-sm transition hover:bg-gray-50 disabled:opacity-60"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={submitting}
-              className="inline-flex items-center rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-black disabled:opacity-60"
-            >
-              {submitting && (
-                <svg className="mr-2 h-4 w-4 animate-spin" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-                </svg>
-              )}
-              {submitting ? "Creating…" : "Create"}
-            </button>
-          </div>
-        </form>
-      
     </div>
   );
 }

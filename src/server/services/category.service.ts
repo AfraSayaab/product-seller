@@ -9,6 +9,7 @@ type ListParams = {
   page: number;
   pageSize: number;
   withCounts?: boolean;
+  orderBy?: any // parsed in route
 };
 
 async function assertNoCycle(id: number | null | undefined, parentId?: number | null) {
@@ -23,32 +24,64 @@ async function assertNoCycle(id: number | null | undefined, parentId?: number | 
 }
 
 export const CategoryService = {
+
+
+
   async list(params: ListParams) {
-    const { q, parentId, isActive, createdById, page, pageSize, withCounts } = params;
+    const {
+      q,
+      parentId,
+      isActive,
+      createdById,
+      page,
+      pageSize,
+      withCounts = false,
+      orderBy = [{ createdAt: "desc" }] as any,
+    } = params;
+
     const where: any = {};
-    if (q) where.OR = [{ name: { contains: q, mode: "insensitive" } }, { slug: { contains: slugify(q), mode: "insensitive" } }];
+
+    // SEARCH (MySQL collation handles case-insensitivity; remove Postgres-only 'mode')
+    if (q && q.length > 0) {
+      const qSlug = slugify(q);
+      (where as any).OR = [
+        { name: { contains: q } },
+        { slug: { contains: qSlug } },
+      ];
+    }
+
     if (typeof parentId === "number") where.parentId = parentId;
     if (typeof isActive === "boolean") where.isActive = isActive;
     if (typeof createdById === "number") where.createdById = createdById;
+
+    const skip = (page - 1) * pageSize;
+    const take = pageSize;
 
     const [total, items] = await Promise.all([
       prisma.category.count({ where }),
       prisma.category.findMany({
         where,
-        orderBy: [{ parentId: "asc" }, { name: "asc" }],
-        skip: (page - 1) * pageSize,
-        take: pageSize,
+        orderBy, // <- parsed from ?sort=
+        skip,
+        take,
         include: {
-          ...(withCounts
-            ? { _count: { select: { children: true, listings: true } } }
-            : {}),
+          ...(withCounts ? { _count: { select: { children: true, listings: true } } } : {}),
           createdBy: { select: { id: true, username: true, email: true } },
         },
       }),
     ]);
 
-    return { pagination: { total,  page, pageSize , totalPages: Math.max(1, Math.ceil(total / pageSize))}, items};
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+    // If page > totalPages due to deletions, return empty items but still consistent pagination
+    return {
+      pagination: { total, page, pageSize, totalPages },
+      items,
+    };
   },
+
+  // ... (rest of your methods unchanged)
+
+
 
   async getById(id: number) {
     return prisma.category.findUnique({

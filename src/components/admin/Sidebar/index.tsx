@@ -50,7 +50,7 @@ export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; o
                 <Button variant="ghost" size="icon" onClick={onToggle} aria-label={collapsed ? "Expand menu" : "Collapse menu"}>
                     {collapsed ? <Menu className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
                 </Button>
-                {!collapsed && <span className="text-sm font-semibold">User</span>}
+                {!collapsed && <span className="text-sm font-semibold">Admin</span>}
             </div>
             <Separator />
 

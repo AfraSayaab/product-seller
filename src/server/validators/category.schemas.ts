@@ -60,16 +60,29 @@ export const CategoryUpdateSchema = CategoryBaseSchema.partial()
     path: ["createdById"],
   });
 
+
+
 export const CategoryListQuerySchema = z.object({
-  q: z.string().max(120).optional(),
+  q: z.string().trim().optional().default(""),
   parentId: z.coerce.number().int().positive().optional(),
   isActive: z
     .union([z.literal("true"), z.literal("false")])
-    .transform(v => v === "true")
+    .transform((v) => (v === "true" ? true : v === "false" ? false : undefined))
     .optional(),
   createdById: z.coerce.number().int().positive().optional(),
+
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(20),
-  withCounts: z.union([z.literal("true"), z.literal("false")]).optional(),
+
+  // comma-separated list: "createdAt:desc,name:asc"
+  sort: z
+    .string()
+    .trim()
+    .optional()
+    .default("createdAt:desc"),
+
+  // string flags come in as "true"/"false"
+  withCounts: z.string().optional().default("false"),
 });
+export type CategoryListQuery = z.infer<typeof CategoryListQuerySchema>;
 
