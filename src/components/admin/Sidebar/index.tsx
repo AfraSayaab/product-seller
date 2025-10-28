@@ -30,9 +30,9 @@ type NavItem = {
 const NAV_ITEMS: NavItem[] = [
     { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
     { label: "Users", href: "/admin/users", icon: Users },
-    { label: "Products", href: "/dashboard/admin/products", icon: Package },
+    { label: "Products", href: "/admin/listings", icon: Package },
     { label: "Categories", href: "/admin/categories", icon: Tags },
-    { label: "Settings", href: "/dashboard/admin/settings", icon: Settings },
+    { label: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
 export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {

@@ -1,46 +1,41 @@
+// File: components/forms/CategoryCreateForm.tailwind.tsx
 "use client";
 
 import * as React from "react";
 import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
+import ImageFileUploader from "@/components/uploader/ImageFileUploader";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import {
-  Form,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
-  FormField,
-} from "@/components/ui/form";
-import { Textarea } from "@/components/ui/textarea";
-import { Loader2 } from "lucide-react";
-
-// 👉 Replace this import with your existing uploader.
-// Must call onChange(fileName: string | null)
-// import ImageUpload from "@/components/common/ImageUpload";
-
+// ─────────────────────────────────────────────────────────────
+// Schema (attributeSchema removed; backend receives {})
+// ─────────────────────────────────────────────────────────────
 const Schema = z.object({
-  name: z.string().min(2, "Name is required"),
-  slug: z.string().min(2, "Slug is required"),
-  parentId: z.string().optional().nullable(),
+  name: z
+    .string()
+    .min(2, "Please enter at least 2 characters for the name.")
+    .max(100, "Name is too long"),
+  slug: z
+    .string()
+    .min(2, "Please enter at least 2 characters for the slug.")
+    .max(120, "Slug is too long")
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Use lowercase letters, numbers, and hyphens only."),
+  parentId: z
+    .string()
+    .trim()
+    .optional()
+    .nullable()
+    .refine((v) => !v || /^\d+$/.test(v), "Parent ID must be a whole number (or leave empty)."),
   isActive: z.boolean().default(true),
-  image: z.string().nullable().optional(),
-  attributeSchema: z.string().optional(), // raw JSON string
+  image: z.string().nullable().optional(), // S3 key/URL or null
 });
 
-type Values = z.infer<typeof Schema>;
+export type CategoryCreateValues = z.infer<typeof Schema>;
 
 function slugify(s: string) {
-  return s
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)+/g, "");
+  return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
 }
 
 export default function CategoryCreateForm({
@@ -52,7 +47,14 @@ export default function CategoryCreateForm({
 }) {
   const [submitting, setSubmitting] = React.useState(false);
 
-  const form = useForm<Values>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    watch,
+    setValue,
+    reset,
+  } = useForm<CategoryCreateValues>({
     resolver: zodResolver(Schema),
     defaultValues: {
       name: "",
@@ -60,45 +62,35 @@ export default function CategoryCreateForm({
       parentId: "",
       isActive: true,
       image: null,
-      attributeSchema: "{}",
     },
     mode: "onTouched",
   });
 
-  // Auto-slug from name if slug is empty
+  // Auto-generate slug when user types name (only if slug is empty)
   React.useEffect(() => {
-    const sub = form.watch((v, { name }) => {
+    const subscription = watch((values, { name }) => {
       if (name === "name") {
-        const n = (v as any).name as string;
-        if (n && !form.getValues("slug")) {
-          form.setValue("slug", slugify(n), { shouldValidate: true });
+        const n = (values as any).name as string;
+        const currentSlug = (values as any).slug as string;
+        if (n && !currentSlug) {
+          setValue("slug", slugify(n), { shouldValidate: true, shouldDirty: true });
         }
       }
     });
-    return () => sub.unsubscribe();
-  }, [form]);
+    return () => subscription.unsubscribe();
+  }, [watch, setValue]);
 
-  const onSubmit = async (values: Values) => {
+  const onSubmit = async (values: CategoryCreateValues) => {
     try {
       setSubmitting(true);
 
-      // Validate JSON
-      let attr: any = {};
-      if (values.attributeSchema && values.attributeSchema.trim().length) {
-        try {
-          attr = JSON.parse(values.attributeSchema);
-        } catch {
-          throw new Error("Attribute schema must be valid JSON.");
-        }
-      }
-
       const payload = {
-        name: values.name,
-        slug: values.slug,
+        name: values.name.trim(),
+        slug: values.slug.trim(),
         parentId: values.parentId ? Number(values.parentId) : null,
         image: values.image || null,
         isActive: values.isActive,
-        attributeSchema: attr,
+        attributeSchema: {}, // fixed empty object for backend
       };
 
       const res = await api<any>("/api/admin/categories", {
@@ -106,143 +98,148 @@ export default function CategoryCreateForm({
         body: JSON.stringify(payload),
       });
 
-      if (!res?.success && !res?.id) {
-        // compatible with your examples
-        // if API returns success/data else throw:
-        throw new Error(res?.message || "Failed to create category");
-      }
+      const success = res?.success === true || Boolean(res?.data) || Boolean(res?.id);
+      if (!success) throw new Error(res?.message || res?.error || "Failed to create category");
 
-      toast.success("Category created");
+      toast.success("Category created successfully.");
       onSuccess?.();
+      reset({ name: "", slug: "", parentId: "", isActive: true, image: null });
     } catch (err: any) {
-      toast.error(err.message || "Failed to create category");
+      toast.error(err?.message || "Failed to create category");
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Name</FormLabel>
-              <FormControl>
-                <Input placeholder="e.g. Laptops" disabled={submitting} {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+    <div className="mx-auto w-full max-w-2xl">
+   
 
-        <FormField
-          control={form.control}
-          name="slug"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Slug</FormLabel>
-              <FormControl>
-                <Input placeholder="laptops" disabled={submitting} {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* Parent Id (optional) */}
-        <FormField
-          control={form.control}
-          name="parentId"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Parent ID (optional)</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="numeric id"
-                  inputMode="numeric"
-                  disabled={submitting}
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* Image Upload (your existing uploader) */}
-        {/* <FormField
-          control={form.control}
-          name="image"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Image (optional)</FormLabel>
-              <FormControl>
-                <div className="flex items-center gap-3">
-                  <ImageUpload
-                    value={field.value || ""}
-                    onChange={(fileName: string | null) => field.onChange(fileName)}
-                  />
-                  {field.value ? (
-                    <span className="text-xs text-muted-foreground">{field.value}</span>
-                  ) : (
-                    <span className="text-xs text-muted-foreground">No image selected</span>
-                  )}
-                </div>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        /> */}
-
-        {/* Active */}
-        <FormField
-          control={form.control}
-          name="isActive"
-          render={({ field }) => (
-            <FormItem className="flex items-center justify-between rounded-md border p-3">
-              <FormLabel className="m-0">Active</FormLabel>
-              <FormControl>
-                <Switch checked={field.value} onCheckedChange={field.onChange} disabled={submitting} />
-              </FormControl>
-            </FormItem>
-          )}
-        />
-
-        {/* Attribute schema (JSON) */}
-        <FormField
-          control={form.control}
-          name="attributeSchema"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Attribute Schema (JSON)</FormLabel>
-              <FormControl>
-                <Textarea rows={4} disabled={submitting} {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* Actions */}
-        <div className="flex items-center justify-end gap-3 pt-2">
-          <Button type="button" variant="outline" onClick={onCancel} disabled={submitting}>
-            Cancel
-          </Button>
-          <Button type="submit" disabled={submitting}>
-            {submitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating…
-              </>
-            ) : (
-              "Create"
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          {/* Name */}
+          <div className="space-y-1.5">
+            <label htmlFor="name" className="block text-sm font-medium text-gray-900">
+              Name
+            </label>
+            <input
+              id="name"
+              type="text"
+              autoComplete="off"
+              disabled={submitting}
+              className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 shadow-sm outline-none transition focus:border-gray-900 focus:ring-1 focus:ring-gray-900 disabled:opacity-60"
+              placeholder="e.g. Laptops"
+              {...register("name")}
+            />
+            {errors.name && (
+              <p className="text-xs text-red-600">{errors.name.message}</p>
             )}
-          </Button>
-        </div>
-      </form>
-    </Form>
+            <p className="text-xs text-gray-500">Shown in lists and navigation.</p>
+          </div>
+
+          {/* Slug */}
+          <div className="space-y-1.5">
+            <label htmlFor="slug" className="block text-sm font-medium text-gray-900">
+              Slug
+            </label>
+            <input
+              id="slug"
+              type="text"
+              autoComplete="off"
+              disabled={submitting}
+              className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 shadow-sm outline-none transition focus:border-gray-900 focus:ring-1 focus:ring-gray-900 disabled:opacity-60"
+              placeholder="laptops"
+              {...register("slug")}
+            />
+            {errors.slug && (
+              <p className="text-xs text-red-600">{errors.slug.message}</p>
+            )}
+            <p className="text-xs text-gray-500">Lowercase, numbers, and hyphens only.</p>
+          </div>
+
+          {/* Parent ID */}
+          <div className="space-y-1.5">
+            <label htmlFor="parentId" className="block text-sm font-medium text-gray-900">
+              Parent ID (optional)
+            </label>
+            <input
+              id="parentId"
+              type="text"
+              inputMode="numeric"
+              autoComplete="off"
+              disabled={submitting}
+              className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 shadow-sm outline-none transition focus:border-gray-900 focus:ring-1 focus:ring-gray-900 disabled:opacity-60"
+              placeholder="Numeric ID"
+              {...register("parentId")}
+            />
+            {errors.parentId && (
+              <p className="text-xs text-red-600">{errors.parentId.message}</p>
+            )}
+            <p className="text-xs text-gray-500">Leave empty for a top-level category.</p>
+          </div>
+
+          {/* Active toggle */}
+          <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+            <div>
+              <p className="text-sm font-medium text-gray-900">Active</p>
+              <p className="text-xs text-gray-500">Inactive categories are hidden from users.</p>
+            </div>
+            <label className="relative inline-flex cursor-pointer items-center">
+              <input
+                type="checkbox"
+                className="peer sr-only"
+                disabled={submitting}
+                {...register("isActive")}
+              />
+              <div className="h-6 w-11 rounded-full bg-gray-300 transition peer-checked:bg-gray-900 peer-focus:outline-none"></div>
+              <div className="absolute left-1 top-1 h-4 w-4 rounded-full bg-white transition peer-checked:translate-x-5"></div>
+            </label>
+          </div>
+
+          {/* Image (single) */}
+          <div className="space-y-1.5">
+            <label className="block text-sm font-medium text-gray-900">Image (optional)</label>
+
+            <ImageFileUploader
+              label=""
+              helperText="JPEG/PNG/WebP up to 5MB"
+              mode="single"
+              accept={["image/*"]}
+              maxSizeMB={5}
+              folder="products/hero"
+              defaultValue={null}
+              onChange={(v: any) => setValue("image", v)}
+            />
+            <p className="text-xs text-gray-500">Recommended: square image (e.g., 800×800).</p>
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center justify-end gap-3 pt-2">
+            <button
+              type="button"
+              onClick={onCancel}
+              disabled={submitting}
+              className="inline-flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-900 shadow-sm transition hover:bg-gray-50 disabled:opacity-60"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="inline-flex items-center rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-black disabled:opacity-60"
+            >
+              {submitting && (
+                <svg className="mr-2 h-4 w-4 animate-spin" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                </svg>
+              )}
+              {submitting ? "Creating…" : "Create"}
+            </button>
+          </div>
+        </form>
+      
+    </div>
   );
 }
+
+

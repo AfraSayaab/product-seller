@@ -13,12 +13,13 @@ export async function GET(req: NextRequest) {
 
 
     const totalUser = await prisma.user.count()
+    const totalCategory = await prisma.category.count()
 
     return NextResponse.json(
         ok({
             totalUser,
             totalProducts: 300,
-            totalCategory: 400,
+            totalCategory,
             planPurchased: 80,
         })
     );
