@@ -147,12 +147,19 @@ export default function LoginPage() {
                                 )}
                             </Button>
 
-                            <p className="text-sm text-center">
-                                Don’t have an account?{' '}
-                                <a className="underline" href="/register">
-                                    Register
-                                </a>
-                            </p>
+                            <div className="text-center space-y-2">
+                                <p className="text-sm">
+                                    <a href="/forgot-password" className="text-indigo-600 hover:underline dark:text-indigo-400 font-medium">
+                                        Forgot password?
+                                    </a>
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                    Don't have an account?{' '}
+                                    <a className="text-indigo-600 hover:underline dark:text-indigo-400 font-medium" href="/register">
+                                        Register
+                                    </a>
+                                </p>
+                            </div>
                         </form>
                     </Form>
                 </CardContent>

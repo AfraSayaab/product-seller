@@ -107,6 +107,10 @@ model User {
   isFirstLogin Boolean   @default(true)
   lastLogin    DateTime? @db.Timestamp(6)
 
+  // Password reset
+  passwordResetToken   String?   @db.VarChar(255)
+  passwordResetExpires DateTime? @db.Timestamp(6)
+
   // Names & identity
   firstName       String? @db.VarChar(100)
   lastName        String? @db.VarChar(100)

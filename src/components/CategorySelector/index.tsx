@@ -1,8 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { api } from "@/lib/api";
-
+import { api } from "@/lib/api"; // IMPORTANT: this returns `json.data`, not the envelope
+import { useDebounce } from "@/lib/use-debounce";
 type CategoryItem = {
   id: number;
   name: string;
@@ -16,48 +16,32 @@ type CategoryItem = {
   createdBy?: { id: number; username: string; email: string };
 };
 
-type ApiListResponse = {
-  success: boolean;
-  data?: {
-    pagination: { total: number; page: number; pageSize: number; totalPages: number };
-    items: CategoryItem[];
-  };
-  error?: string;
+type CategoryListData = {
+  pagination: { total: number; page: number; pageSize: number; totalPages: number };
+  items: CategoryItem[];
+  q?: string;
+  sort?: string;
 };
 
 export type ParentCategorySelectProps = {
-  /** currently selected parent id (or null) */
   value: number | null;
-  /** callback returns number id or null */
   onChange: (id: number | null) => void;
 
-  /** API path for categories */
-  apiPath?: string; // default: "/api/admin/categories"
-  /** page size for list fetching */
-  pageSize?: number; // default: 20
-  /** min chars to trigger search */
-  minChars?: number; // default: 0 (show all)
-  /** debounce time for search input */
-  debounceMs?: number; // default: 300
-  /** placeholder text */
-  placeholder?: string; // default: "Search categories…"
-  /** label for the field (optional) */
-  label?: string; // default: "Parent Category"
-  /** show 'None' (clear) button */
-  allowClear?: boolean; // default: true
-  /** disable interaction */
-  disabled?: boolean; // default: false
-  /** extra class on wrapper */
+  apiPath?: string;       // default: "/api/admin/categories"
+  pageSize?: number;      // default: 20
+  minChars?: number;      // default: 0
+  debounceMs?: number;    // default: 300
+  placeholder?: string;   // default: "Search categories…"
+  label?: string;         // default: "Parent Category"
+  allowClear?: boolean;   // default: true
+  disabled?: boolean;     // default: false
   className?: string;
-
-  /** Exclude a category id from results (e.g., current editing id) */
   excludeId?: number;
-
-  /** Optional transform of API items before displaying */
   mapItemLabel?: (item: CategoryItem) => string; // default: `${name} (${slug})`
+  defaultSort?: string;   // default: "name:asc"
 };
 
-function classNames(...a: Array<string | false | null | undefined>) {
+function cx(...a: Array<string | false | null | undefined>) {
   return a.filter(Boolean).join(" ");
 }
 
@@ -69,12 +53,13 @@ export default function ParentCategorySelect({
   minChars = 0,
   debounceMs = 300,
   placeholder = "Search categories…",
-  label = "Parent Category",
+  label = "",
   allowClear = true,
   disabled = false,
   className,
   excludeId,
   mapItemLabel,
+  defaultSort = "name:asc",
 }: ParentCategorySelectProps) {
   const [open, setOpen] = React.useState(false);
   const [q, setQ] = React.useState("");
@@ -87,17 +72,10 @@ export default function ParentCategorySelect({
 
   const wrapperRef = React.useRef<HTMLDivElement>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
-  const listRef = React.useRef<HTMLUListElement>(null);
+  const listRef = React.useRef<any>(null);
 
-  const selectedItem = React.useMemo(
-    () => items.find((it) => it.id === value) || null,
-    [items, value]
-  );
-
-  // Debounce search
   const debouncedQ = useDebounce(q, debounceMs);
 
-  // Fetch list
   const fetchItems = React.useCallback(
     async (pageNum = 1) => {
       try {
@@ -105,25 +83,23 @@ export default function ParentCategorySelect({
         setError(null);
 
         const url = new URL(apiPath, window.location.origin);
-        if (debouncedQ && debouncedQ.length >= minChars) url.searchParams.set("q", debouncedQ);
+        const query =
+          debouncedQ && debouncedQ.length >= minChars ? debouncedQ : "";
+        if (query) url.searchParams.set("q", query);
         url.searchParams.set("page", String(pageNum));
         url.searchParams.set("pageSize", String(pageSize));
-        // you can add &withCounts=true or others as your API supports
+        url.searchParams.set("sort", defaultSort);
 
-        const res: ApiListResponse = await api<ApiListResponse>(url.pathname + "?" + url.searchParams.toString(), {
+        // Your `api<T>` returns `json.data` directly; so `res` is CategoryListData.
+        const res = await api<CategoryListData>(url.pathname + "?" + url.searchParams.toString(), {
           method: "GET",
         });
 
-        if (!res?.success || !res?.data) throw new Error(res?.error || "Failed to load categories");
-
-        const list = excludeId
-          ? res.data.items.filter((x) => x.id !== excludeId)
-          : res.data.items;
+        const list = excludeId ? res.items.filter((x) => x.id !== excludeId) : res.items;
 
         setItems(list);
-        setPage(res.data.pagination.page);
-        setTotalPages(res.data.pagination.totalPages);
-        // reset active index when new data arrives
+        setPage(res.pagination.page);
+        setTotalPages(res.pagination.totalPages);
         setActiveIdx(list.length ? 0 : -1);
       } catch (e: any) {
         setError(e?.message || "Failed to load categories");
@@ -133,10 +109,9 @@ export default function ParentCategorySelect({
         setLoading(false);
       }
     },
-    [apiPath, pageSize, debouncedQ, minChars, excludeId]
+    [apiPath, pageSize, debouncedQ, minChars, excludeId, defaultSort]
   );
 
-  // Load on open + whenever debounced query/page changes
   React.useEffect(() => {
     if (!open) return;
     fetchItems(1);
@@ -147,7 +122,6 @@ export default function ParentCategorySelect({
     fetchItems(1);
   }, [debouncedQ]); // eslint-disable-line
 
-  // Click outside to close
   React.useEffect(() => {
     const onDocClick = (e: MouseEvent) => {
       if (!wrapperRef.current) return;
@@ -157,39 +131,23 @@ export default function ParentCategorySelect({
     return () => document.removeEventListener("mousedown", onDocClick);
   }, []);
 
-  // Keyboard navigation
   const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (!open) return;
     if (e.key === "ArrowDown") {
       e.preventDefault();
       setActiveIdx((i) => Math.min(i + 1, items.length - 1));
-      scrollActiveIntoView();
+      scrollActiveIntoView(listRef, activeIdx + 1);
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       setActiveIdx((i) => Math.max(i - 1, 0));
-      scrollActiveIntoView();
+      scrollActiveIntoView(listRef, Math.max(activeIdx - 1, 0));
     } else if (e.key === "Enter") {
       e.preventDefault();
-      if (activeIdx >= 0 && items[activeIdx]) {
-        handleSelect(items[activeIdx]);
-      }
+      if (activeIdx >= 0 && items[activeIdx]) handleSelect(items[activeIdx]);
     } else if (e.key === "Escape") {
       e.preventDefault();
       setOpen(false);
     }
-  };
-
-  const scrollActiveIntoView = () => {
-    requestAnimationFrame(() => {
-      const list = listRef.current;
-      if (!list) return;
-      const el = list.querySelector<HTMLLIElement>(`li[data-idx="${activeIdx}"]`);
-      if (!el) return;
-      const listRect = list.getBoundingClientRect();
-      const elRect = el.getBoundingClientRect();
-      if (elRect.top < listRect.top) el.scrollIntoView({ block: "nearest" });
-      else if (elRect.bottom > listRect.bottom) el.scrollIntoView({ block: "nearest" });
-    });
   };
 
   const handleSelect = (item: CategoryItem) => {
@@ -205,34 +163,29 @@ export default function ParentCategorySelect({
     inputRef.current?.focus();
   };
 
-  const displayLabel = (item: CategoryItem) =>
+  const labelFor = (item: CategoryItem) =>
     mapItemLabel ? mapItemLabel(item) : `${item.name} (${item.slug})`;
 
   return (
-    <div className={classNames("w-full", className)} ref={wrapperRef}>
-      {label && (
-        <label className="mb-1 block text-sm font-medium text-gray-900">{label}</label>
-      )}
+    <div className={cx("w-full", className)} ref={wrapperRef}>
+      {label && <label className="mb-1 block text-sm font-medium text-gray-900">{label}</label>}
+
       <div className="relative">
         <div
-          className={classNames(
+          className={cx(
             "flex items-center gap-2 rounded-lg border px-3 py-2 shadow-sm",
             disabled ? "bg-gray-100 text-gray-400 border-gray-200" : "bg-white border-gray-300",
             "focus-within:border-gray-900 focus-within:ring-1 focus-within:ring-gray-900"
           )}
         >
-          <svg
-            className="h-4 w-4 text-gray-400"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-            aria-hidden="true"
-          >
+          <svg className="h-4 w-4 text-gray-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
             <path
               fillRule="evenodd"
               d="M12.9 14.32a8 8 0 111.414-1.414l4.387 4.387a1 1 0 01-1.414 1.414l-4.387-4.387zM14 8a6 6 0 11-12 0 6 6 0 0112 0z"
               clipRule="evenodd"
             />
           </svg>
+
           <input
             ref={inputRef}
             type="text"
@@ -248,6 +201,7 @@ export default function ParentCategorySelect({
             aria-controls="parent-category-listbox"
             role="combobox"
           />
+
           {allowClear && (value !== null || q) && !disabled && (
             <button
               type="button"
@@ -264,9 +218,10 @@ export default function ParentCategorySelect({
               </svg>
             </button>
           )}
+
           <button
             type="button"
-            className={classNames(
+            className={cx(
               "rounded-md p-1",
               disabled ? "text-gray-300" : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
             )}
@@ -285,21 +240,9 @@ export default function ParentCategorySelect({
 
         {open && (
           <div className="absolute z-50 mt-1 w-full overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
-            {/* Results */}
-            <ul
-              id="parent-category-listbox"
-              role="listbox"
-              ref={listRef}
-              className="max-h-72 overflow-auto py-1"
-            >
-              {loading && (
-                <li className="px-3 py-2 text-sm text-gray-500">Loading…</li>
-              )}
-
-              {!loading && error && (
-                <li className="px-3 py-2 text-sm text-red-600">{error}</li>
-              )}
-
+            <ul id="parent-category-listbox" role="listbox" ref={listRef} className="max-h-72 overflow-auto py-1">
+              {loading && <li className="px-3 py-2 text-sm text-gray-500">Loading…</li>}
+              {!loading && error && <li className="px-3 py-2 text-sm text-red-600">{error}</li>}
               {!loading && !error && items.length === 0 && (
                 <li className="px-3 py-2 text-sm text-gray-500">No categories found.</li>
               )}
@@ -315,7 +258,7 @@ export default function ParentCategorySelect({
                       data-idx={idx}
                       role="option"
                       aria-selected={selected}
-                      className={classNames(
+                      className={cx(
                         "flex cursor-pointer items-center justify-between px-3 py-2 text-sm",
                         active ? "bg-gray-100" : "bg-white",
                         selected ? "font-medium" : "font-normal",
@@ -324,7 +267,7 @@ export default function ParentCategorySelect({
                       onMouseEnter={() => setActiveIdx(idx)}
                       onClick={() => handleSelect(item)}
                     >
-                      <span className="truncate">{displayLabel(item)}</span>
+                      <span className="truncate">{labelFor(item)}</span>
                       {selected && (
                         <svg className="ml-2 h-4 w-4 text-gray-700" viewBox="0 0 20 20" fill="currentColor">
                           <path
@@ -339,7 +282,6 @@ export default function ParentCategorySelect({
                 })}
             </ul>
 
-            {/* Pagination footer */}
             <div className="flex items-center justify-between border-t bg-gray-50 px-2 py-1.5">
               <span className="text-xs text-gray-500">
                 Page {page} of {totalPages}
@@ -350,8 +292,9 @@ export default function ParentCategorySelect({
                   className="rounded-md px-2 py-1 text-xs text-gray-700 hover:bg-gray-100 disabled:text-gray-300"
                   disabled={loading || page <= 1}
                   onClick={() => {
-                    setPage((p) => Math.max(1, p - 1));
-                    fetchItems(Math.max(1, page - 1));
+                    const next = Math.max(1, page - 1);
+                    setPage(next);
+                    fetchItems(next);
                   }}
                 >
                   Prev
@@ -373,21 +316,21 @@ export default function ParentCategorySelect({
           </div>
         )}
       </div>
-
-      {/* Helper text */}
-      <p className="mt-1 text-xs text-gray-500">
-        Choose a parent category or clear to set as top-level.
-      </p>
     </div>
   );
 }
 
-/** Debounce hook */
-function useDebounce<T>(value: T, delay = 300) {
-  const [debounced, setDebounced] = React.useState(value);
-  React.useEffect(() => {
-    const id = setTimeout(() => setDebounced(value), delay);
-    return () => clearTimeout(id);
-  }, [value, delay]);
-  return debounced;
+function scrollActiveIntoView(listRef: React.RefObject<HTMLUListElement>, idx: number) {
+  requestAnimationFrame(() => {
+    const list = listRef.current;
+    if (!list) return;
+    const el = list.querySelector<HTMLLIElement>(`li[data-idx="${idx}"]`);
+    if (!el) return;
+    const listRect = list.getBoundingClientRect();
+    const elRect = el.getBoundingClientRect();
+    if (elRect.top < listRect.top) el.scrollIntoView({ block: "nearest" });
+    else if (elRect.bottom > listRect.bottom) el.scrollIntoView({ block: "nearest" });
+  });
 }
+
+
