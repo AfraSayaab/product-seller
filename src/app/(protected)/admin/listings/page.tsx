@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import LoaderOverlay from "@/components/ui/LoaderOverlay";
 
 import CategoriesTable from "@/components/admin/categories/CategoriesTable";
-import AddCategoryDialog from "@/components/admin/categories/AddCategoryDialog";
+import AddCategoryModal from "@/components/admin/categories/AddCategoryModal";
 
 type Category = {
   id: number;
@@ -49,19 +49,32 @@ export default function CategoryPage() {
     q: "",
   });
 
+  // Use refs to track pagination state to prevent infinite loops
+  const paginationRef = React.useRef(data.pagination);
+  const sortRef = React.useRef(data.sort);
+  
+  React.useEffect(() => {
+    paginationRef.current = data.pagination;
+    sortRef.current = data.sort;
+  }, [data.pagination, data.sort]);
+
   const fetchCategories = React.useCallback(
     async (
       page = 1,
-      pageSize = data.pagination.pageSize,
-      sort = data.sort,
-      q = debounced
+      pageSize?: number,
+      sort?: string,
+      q?: string
     ) => {
       setLoading(true);
       try {
+        const currentPageSize = pageSize ?? paginationRef.current.pageSize;
+        const currentSort = sort ?? sortRef.current;
+        const currentQ = q ?? debounced;
+
         const res = await api<ListResponse>(
-          `/api/admin/categories?page=${page}&pageSize=${pageSize}&sort=${encodeURIComponent(
-            sort
-          )}&q=${encodeURIComponent(q)}`
+          `/api/admin/categories?page=${page}&pageSize=${currentPageSize}&sort=${encodeURIComponent(
+            currentSort
+          )}&q=${encodeURIComponent(currentQ)}`
         );
         setData(res);
       } catch (e: any) {
@@ -70,64 +83,94 @@ export default function CategoryPage() {
         setLoading(false);
       }
     },
-    [debounced, data.pagination.pageSize, data.sort]
+    [debounced]
   );
 
   React.useEffect(() => {
     fetchCategories(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debounced, refreshKey]);
 
+  const handlePageChange = React.useCallback((p: number) => {
+    fetchCategories(p);
+  }, [fetchCategories]);
+
+  const handlePageSizeChange = React.useCallback((ps: number) => {
+    fetchCategories(1, ps);
+  }, [fetchCategories]);
+
+  const handleSortChange = React.useCallback((s: string) => {
+    fetchCategories(1, undefined, s);
+  }, [fetchCategories]);
+
+  const handleRefresh = React.useCallback(() => {
+    setRefreshKey((k) => k + 1);
+  }, []);
+
+  const handleCreated = React.useCallback(() => {
+    setRefreshKey((k) => k + 1);
+  }, []);
+
   return (
-    <div className="flex flex-col gap-4">
-      {loading && <LoaderOverlay label="Fetching categories..." />}
+    <div className="flex flex-col gap-4 p-4 sm:p-6">
+      <div className="relative">
+        {loading && <LoaderOverlay label="Fetching categories..." />}
+        
+        <Card>
+          <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <Tags className="h-5 w-5" />
+              <CardTitle>Categories</CardTitle>
+            </div>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Tags className="h-5 w-5" />
-            <CardTitle>Categories</CardTitle>
-          </div>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+              <Input
+                placeholder="Search categories…"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                className="w-full sm:w-64"
+              />
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  onClick={handleRefresh}
+                  disabled={loading}
+                  className="flex-1 sm:flex-initial"
+                >
+                  <RefreshCcw className="h-4 w-4 mr-2" /> 
+                  <span className="hidden sm:inline">Refresh</span>
+                </Button>
+                <Button 
+                  onClick={() => setOpenAdd(true)}
+                  className="flex-1 sm:flex-initial"
+                >
+                  <Plus className="h-4 w-4 mr-2" /> 
+                  <span className="hidden sm:inline">Add Category</span>
+                  <span className="sm:hidden">Add</span>
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
 
-          <div className="flex items-center gap-2">
-            <Input
-              placeholder="Search categories (name/slug)…"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className="w-64"
+          <CardContent className="p-0 sm:p-6">
+            <CategoriesTable
+              rows={data.items}
+              pagination={data.pagination}
+              sort={data.sort}
+              loading={loading}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
+              onSortChange={handleSortChange}
+              onChanged={handleRefresh}
             />
-            <Button
-              variant="outline"
-              onClick={() => setRefreshKey((k) => k + 1)}
-              disabled={loading}
-            >
-              <RefreshCcw className="h-4 w-4 mr-2" /> Refresh
-            </Button>
-            <Button onClick={() => setOpenAdd(true)}>
-              <Plus className="h-4 w-4 mr-2" /> Add Category
-            </Button>
-          </div>
-        </CardHeader>
+          </CardContent>
+        </Card>
+      </div>
 
-        <CardContent>
-          <CategoriesTable
-            rows={data.items}
-            pagination={data.pagination}
-            sort={data.sort}
-            loading={loading}
-            onPageChange={(p: number) => fetchCategories(p)}
-            onPageSizeChange={(ps: number) =>
-              fetchCategories(1, ps, data.sort, debounced)
-            }
-            onSortChange={(s: string) => fetchCategories(1, data.pagination.pageSize, s)}
-            onChanged={() => setRefreshKey((k) => k + 1)}
-          />
-        </CardContent>
-      </Card>
-
-      <AddCategoryDialog
+      <AddCategoryModal
         open={openAdd}
         onOpenChange={setOpenAdd}
-        onCreated={() => setRefreshKey((k) => k + 1)}
+        onCreated={handleCreated}
       />
     </div>
   );

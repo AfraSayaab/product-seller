@@ -21,6 +21,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import EditCategoryModal from "./EditCategoryModal";
 import DeleteCategoryModal from "./DeleteCategoryModal";
+import CategoryViewSheet from "./CategoryViewSheet";
 
 type Category = {
   id: number;
@@ -37,11 +38,13 @@ type Category = {
 const CategoryRow = React.memo(({ 
   category, 
   onEdit, 
-  onDelete 
+  onDelete,
+  onView
 }: { 
   category: Category; 
   onEdit: (id: number) => void;
   onDelete: (id: number) => void;
+  onView: (id: number) => void;
 }) => {
   const formatDate = React.useMemo(() => {
     if (!category.createdAt) return "—";
@@ -53,7 +56,16 @@ const CategoryRow = React.memo(({
       <TableCell className="font-medium">{category.name}</TableCell>
       <TableCell className="text-muted-foreground hidden sm:table-cell">{category.slug}</TableCell>
       <TableCell className="hidden md:table-cell">
-        {category.parentId ? `#${category.parentId}` : <span className="text-muted-foreground">—</span>}
+        {category.parentId ? (
+          <button
+            onClick={() => onView(category.parentId!)}
+            className="text-black hover:text-gray-600 hover:underline font-medium transition-colors"
+          >
+            View Details
+          </button>
+        ) : (
+          <span className="text-muted-foreground">No Details Available</span>
+        )}
       </TableCell>
       <TableCell className="hidden lg:table-cell">
         {category.image ? (
@@ -98,11 +110,13 @@ CategoryRow.displayName = "CategoryRow";
 const CategoryCard = React.memo(({ 
   category, 
   onEdit, 
-  onDelete 
+  onDelete,
+  onView
 }: { 
   category: Category; 
   onEdit: (id: number) => void;
   onDelete: (id: number) => void;
+  onView: (id: number) => void;
 }) => {
   const formatDate = React.useMemo(() => {
     if (!category.createdAt) return "—";
@@ -128,7 +142,13 @@ const CategoryCard = React.memo(({
       <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
         {category.parentId && (
           <div>
-            <span className="font-medium">Parent:</span> #{category.parentId}
+            <span className="font-medium">Parent:</span>{" "}
+            <button
+              onClick={() => onView(category.parentId!)}
+              className="text-black hover:text-gray-600 hover:underline font-medium transition-colors"
+            >
+              #{category.parentId}
+            </button>
           </div>
         )}
         {category.image && (
@@ -185,6 +205,7 @@ export default function CategoriesTable({
 }) {
   const [openEditId, setOpenEditId] = React.useState<number | null>(null);
   const [openDeleteId, setOpenDeleteId] = React.useState<number | null>(null);
+  const [openViewId, setOpenViewId] = React.useState<number | null>(null);
   const [deleteCategoryName, setDeleteCategoryName] = React.useState<string>("");
   const [isMobile, setIsMobile] = React.useState(false);
 
@@ -217,6 +238,10 @@ export default function CategoriesTable({
     setDeleteCategoryName(category?.name || "");
     setOpenDeleteId(id);
   }, [rows]);
+
+  const handleView = React.useCallback((id: number) => {
+    setOpenViewId(id);
+  }, []);
 
   // Lazy load rows - only render visible items
   const [visibleRange, setVisibleRange] = React.useState({ start: 0, end: 20 });
@@ -315,6 +340,7 @@ export default function CategoriesTable({
                   category={c}
                   onEdit={handleEdit}
                   onDelete={handleDelete}
+                  onView={handleView}
                 />
               ))
             )}
@@ -341,6 +367,7 @@ export default function CategoriesTable({
                 category={c}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
+                onView={handleView}
               />
             ))}
             {visibleRange.end < rows.length && (
@@ -419,6 +446,12 @@ export default function CategoriesTable({
           onChanged?.();
           setOpenDeleteId(null);
         }}
+      />
+
+      <CategoryViewSheet
+        open={!!openViewId}
+        onClose={() => setOpenViewId(null)}
+        categoryId={openViewId}
       />
     </div>
   );

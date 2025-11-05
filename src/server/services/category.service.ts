@@ -88,6 +88,23 @@ export const CategoryService = {
       where: { id },
       include: {
         parent: { select: { id: true, name: true, slug: true, parentId: true } },
+        children: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            parentId: true,
+            // Include grandchildren if needed
+            children: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+                parentId: true,
+              },
+            },
+          },
+        },
         createdBy: { select: { id: true, username: true, email: true } },
         _count: { select: { children: true, listings: true } },
       },
@@ -161,8 +178,8 @@ export const CategoryService = {
 
     const newSlug =
       patch.slug ? await ensureUniqueSlug(patch.slug, id)
-      : patch.name ? await ensureUniqueSlug(patch.name, id)
-      : undefined;
+        : patch.name ? await ensureUniqueSlug(patch.name, id)
+          : undefined;
 
     const updated = await prisma.category.update({
       where: { id },
@@ -222,9 +239,9 @@ export const CategoryService = {
       trail.unshift(current);
       current = current.parentId
         ? await prisma.category.findUnique({
-            where: { id: current.parentId },
-            select: { id: true, name: true, slug: true, parentId: true },
-          })
+          where: { id: current.parentId },
+          select: { id: true, name: true, slug: true, parentId: true },
+        })
         : null;
     }
     return trail;
