@@ -77,14 +77,14 @@ const CategoryRow = React.memo(({
         <div className="flex items-center gap-2">
           <button 
             onClick={() => onEdit(category.id)}
-            className="h-8 w-8 border-2 border-black hover:bg-black hover:text-white transition-colors flex items-center justify-center"
+            className="h-8 w-8  hover:bg-black hover:text-white transition-colors flex items-center justify-center"
             aria-label={`Edit ${category.name}`}
           >
             <Pencil className="h-4 w-4" />
           </button>
           <button 
             onClick={() => onDelete(category.id)}
-            className="h-8 w-8 border-2 border-black hover:bg-black hover:text-white transition-colors flex items-center justify-center"
+            className="h-8 w-8  hover:bg-black hover:text-white transition-colors flex items-center justify-center"
             aria-label={`Delete ${category.name}`}
           >
             <Trash2 className="h-4 w-4" />

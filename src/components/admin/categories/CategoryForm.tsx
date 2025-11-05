@@ -113,7 +113,7 @@ export default function CategoryForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6 p-6">
       {/* Name */}
       <div className="space-y-2">
         <label className="block text-sm font-bold text-black">
