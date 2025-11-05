@@ -64,7 +64,7 @@ const CategoryRow = React.memo(({
             View Details
           </button>
         ) : (
-          <span className="text-muted-foreground">No Details Available</span>
+          <span className="text-muted-foreground">N/A</span>
         )}
       </TableCell>
       <TableCell className="hidden lg:table-cell">
