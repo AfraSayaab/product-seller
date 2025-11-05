@@ -16,3 +16,17 @@ export async function ensureUniqueSlug(base: string, excludeId?: number) {
     slug = `${baseSlug}-${i++}`;
   }
 }
+
+export async function ensureUniqueListingSlug(base: string, excludeId?: number) {
+  const baseSlug = slugify(base);
+  let slug = baseSlug;
+  let i = 2;
+  while (true) {
+    const existing = await prisma.listing.findFirst({
+      where: { slug, ...(excludeId ? { NOT: { id: excludeId } } : {}) },
+      select: { id: true },
+    });
+    if (!existing) return slug;
+    slug = `${baseSlug}-${i++}`;
+  }
+}

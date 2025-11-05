@@ -1,0 +1,9 @@
+-- AlterTable
+ALTER TABLE `Listing` MODIFY `expiresAt` DATETIME(3) NULL DEFAULT NULL;
+
+-- AlterTable
+ALTER TABLE `Plan` ADD COLUMN `isFeatured` BOOLEAN NOT NULL DEFAULT false,
+    ADD COLUMN `isSticky` BOOLEAN NOT NULL DEFAULT false,
+    ADD COLUMN `maxCategories` INTEGER NOT NULL DEFAULT 1,
+    ADD COLUMN `quotaVideosPerListing` INTEGER NOT NULL DEFAULT 0,
+    MODIFY `quotaPhotosPerListing` INTEGER NOT NULL DEFAULT 8;

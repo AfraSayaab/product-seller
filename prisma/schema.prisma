@@ -281,12 +281,16 @@ model Plan {
   description           String?  @db.Text
   price                 Decimal  @db.Decimal(12, 2)
   currency              Currency @default(PKR)
-  durationDays          Int // e.g., 30
+  durationDays          Int // e.g., 7, 30
   maxActiveListings     Int // overall cap
   quotaListings         Int // how many new listings can be published in period
-  quotaPhotosPerListing Int      @default(10)
+  quotaPhotosPerListing Int      @default(8)
+  quotaVideosPerListing Int      @default(0) // max videos per listing
   quotaBumps            Int      @default(0)
   quotaFeaturedDays     Int      @default(0)
+  maxCategories         Int      @default(1) // max categories per listing
+  isSticky              Boolean  @default(false) // sticky listing feature
+  isFeatured            Boolean  @default(false) // featured listing feature
   isActive              Boolean  @default(true)
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt

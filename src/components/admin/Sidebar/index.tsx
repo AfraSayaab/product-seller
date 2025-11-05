@@ -11,6 +11,7 @@ import {
     Settings,
     Menu,
     ChevronLeft,
+    CreditCard
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -32,7 +33,9 @@ const NAV_ITEMS: NavItem[] = [
     { label: "Users", href: "/admin/users", icon: Users },
     { label: "Products", href: "/admin/listings", icon: Package },
     { label: "Categories", href: "/admin/categories", icon: Tags },
+    { label: "Plans", href: "/admin/plans", icon: CreditCard },
     { label: "Settings", href: "/admin/settings", icon: Settings },
+    
 ];
 
 export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {

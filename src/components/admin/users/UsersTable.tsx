@@ -49,6 +49,7 @@ export default function UsersTable({ rows, pagination, sort, loading, onPageChan
                                 Role <ArrowUpDown className="inline h-3 w-3 ml-1" />
                             </TableHead>
                             <TableHead>Verified</TableHead>
+                            <TableHead>Active Plan</TableHead>
                             <TableHead className="cursor-pointer" onClick={() => toggleSort("createdAt")}>
                                 Created <ArrowUpDown className="inline h-3 w-3 ml-1" />
                             </TableHead>
@@ -58,7 +59,7 @@ export default function UsersTable({ rows, pagination, sort, loading, onPageChan
                     <TableBody>
                         {rows?.length === 0 && (
                             <TableRow>
-                                <TableCell colSpan={8} className="text-center text-sm text-muted-foreground">No users found</TableCell>
+                                <TableCell colSpan={9} className="text-center text-sm text-muted-foreground">No users found</TableCell>
                             </TableRow>
                         )}
 
@@ -74,6 +75,20 @@ export default function UsersTable({ rows, pagination, sort, loading, onPageChan
                                     <Badge variant={u.role === "ADMIN" ? "default" : "secondary"}>{u.role}</Badge>
                                 </TableCell>
                                 <TableCell>{u.isVerified ? <Badge>Yes</Badge> : <Badge variant="outline">No</Badge>}</TableCell>
+                                <TableCell>
+                                    {u.subscriptions && u.subscriptions.length > 0 ? (
+                                        <div className="flex flex-col gap-1">
+                                            <Badge variant="default" className="w-fit">
+                                                {u.subscriptions[0].plan.name}
+                                            </Badge>
+                                            <span className="text-xs text-muted-foreground">
+                                                Expires: {new Date(u.subscriptions[0].endAt).toLocaleDateString()}
+                                            </span>
+                                        </div>
+                                    ) : (
+                                        <Badge variant="outline">No Plan</Badge>
+                                    )}
+                                </TableCell>
                                 <TableCell>{new Date(u.createdAt).toLocaleString()}</TableCell>
                                 <TableCell className="flex items-center gap-2">
                                     <Button size="icon" variant="ghost" onClick={() => setOpenEditId(u.id)}>

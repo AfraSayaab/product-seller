@@ -49,6 +49,30 @@ export async function GET(req: NextRequest) {
                 updatedAt: true,
                 firstName: true,
                 lastName: true,
+                subscriptions: {
+                    where: {
+                        status: "ACTIVE",
+                        endAt: {
+                            gte: new Date(),
+                        },
+                    },
+                    include: {
+                        plan: {
+                            select: {
+                                id: true,
+                                name: true,
+                                slug: true,
+                                price: true,
+                                currency: true,
+                                durationDays: true,
+                            },
+                        },
+                    },
+                    orderBy: {
+                        endAt: "desc",
+                    },
+                    take: 1,
+                },
             },
             orderBy,
             skip: (page - 1) * pageSize,

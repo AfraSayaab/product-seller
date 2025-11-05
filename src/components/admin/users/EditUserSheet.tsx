@@ -5,6 +5,7 @@ import { api } from "@/lib/api";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import LoaderOverlay from "@/components/ui/LoaderOverlay";
 import UserEditForm from "../forms/UserEditForm";
+import UserSubscriptionManager from "./UserSubscriptionManager";
 
 export default function EditUserSheet({
   id,
@@ -20,14 +21,17 @@ export default function EditUserSheet({
   const [init, setInit] = React.useState<any | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
+  const [subscription, setSubscription] = React.useState<any | null>(null);
 
   React.useEffect(() => {
     if (!open || !id) return;
     setLoading(true);
-    api(`/api/admin/users/${id}`)
-      .then(setInit)
-      .catch((e) => toast.error(e.message || "Failed to load user"))
-      .finally(() => setLoading(false));
+    Promise.all([
+      api(`/api/admin/users/${id}`).then(setInit).catch((e) => toast.error(e.message || "Failed to load user")),
+      api(`/api/admin/users/${id}/subscription`)
+        .then(setSubscription)
+        .catch(() => setSubscription(null)), // Subscription might not exist
+    ]).finally(() => setLoading(false));
   }, [open, id]);
 
   return (
@@ -37,31 +41,51 @@ export default function EditUserSheet({
           <SheetTitle>Edit User</SheetTitle>
         </SheetHeader>
 
-        <div className="relative h-[calc(100vh-8rem)] overflow-y-auto px-5 pb-10">
+        <div className="relative h-[calc(100vh-8rem)] overflow-y-auto px-5 pb-10 space-y-6">
           {loading && (
             <LoaderOverlay label="Loading user details..." className="bg-background/70" />
           )}
 
           {init && (
-            <UserEditForm
-              initial={init}
-              onSubmit={(values) => {
-                api(`/api/admin/users/${id}`, {
-                  method: "PATCH",
-                  body: JSON.stringify({
-                    ...values,
-                    // map newPassword -> password if your API expects `passwordHash` server-side
-                    password: values.newPassword || undefined,
-                  }),
+            <>
+              <UserEditForm
+                initial={init}
+                onSubmit={(values) => {
+                  setSubmitting(true);
+                  api(`/api/admin/users/${id}`, {
+                    method: "PATCH",
+                    body: JSON.stringify({
+                      ...values,
+                      // map newPassword -> password if your API expects `passwordHash` server-side
+                      password: values.newPassword || undefined,
+                    }),
+                  })
+                    .then(() => {
+                      toast.success("User updated successfully");
+                      onUpdated();
+                    })
+                    .catch((e) => toast.error(e.message || "Failed to update user"))
+                    .finally(() => setSubmitting(false));
+                }}
+                submitting={submitting}
+                lockIdentity
+              />
 
-                })
-                onUpdated()
-              }
-              }
-              submitting={submitting}
-              lockIdentity
-            />
-
+              {id && (
+                <UserSubscriptionManager
+                  userId={id}
+                  currentSubscription={subscription}
+                  onUpdated={() => {
+                    // Refresh subscription
+                    api(`/api/admin/users/${id}/subscription`)
+                      .then(setSubscription)
+                      .catch(() => setSubscription(null));
+                    // Refresh user list
+                    onUpdated();
+                  }}
+                />
+              )}
+            </>
           )}
         </div>
       </SheetContent>
