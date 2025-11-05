@@ -18,7 +18,7 @@ import {
   ChevronRight,
   Image as ImageIcon,
 } from "lucide-react";
-
+import { Badge } from "@/components/ui/badge";
 import EditCategoryModal from "./EditCategoryModal";
 import DeleteCategoryModal from "./DeleteCategoryModal";
 
@@ -66,11 +66,8 @@ const CategoryRow = React.memo(({
         )}
       </TableCell>
       <TableCell>
-        {category.isActive ? (
-          <span className="px-2 py-1 text-xs font-bold bg-black text-white">Active</span>
-        ) : (
-          <span className="px-2 py-1 text-xs font-bold border-2 border-black">Inactive</span>
-        )}
+          <Badge variant={category.isActive ? "default" : "secondary"}>{category.isActive ?"Active":"Inactive"}</Badge>
+      
       </TableCell>
       <TableCell className="hidden lg:table-cell">{formatDate}</TableCell>
       <TableCell>
