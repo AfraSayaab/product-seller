@@ -217,6 +217,92 @@ export const ListingService = {
       isPrimary?: boolean;
     }>;
   }) {
+    // Check user role and apply plan validations for non-admin users
+    const user = await prisma.user.findUnique({
+      where: { id: data.userId },
+      select: { id: true, role: true },
+    });
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // Store subscription ID for quota decrement after successful creation (only for non-admin)
+    let subscriptionIdForQuota: number | null = null;
+
+    // Apply plan checks only for non-admin users
+    if (user.role !== "ADMIN") {
+      // Get user's active subscription
+      const subscription = await prisma.subscription.findFirst({
+        where: {
+          userId: data.userId,
+          status: "ACTIVE",
+          endAt: {
+            gte: new Date(),
+          },
+        },
+        include: {
+          plan: true,
+        },
+        orderBy: {
+          endAt: "desc",
+        },
+      });
+
+      if (!subscription) {
+        throw new Error("No active subscription found. Please subscribe to a plan to create listings.");
+      }
+
+      const plan = subscription.plan;
+
+      // Check max active listings
+      if (plan.maxActiveListings > 0) {
+        const activeListingsCount = await prisma.listing.count({
+          where: {
+            userId: data.userId,
+            status: "ACTIVE",
+            deletedAt: null,
+          },
+        });
+
+        if (activeListingsCount >= plan.maxActiveListings) {
+          throw new Error(
+            `You have reached the maximum limit of ${plan.maxActiveListings} active listings for your plan. Please upgrade your plan or pause/delete existing listings.`
+          );
+        }
+      }
+
+      // Check quota listings (remaining listings in subscription)
+      if (subscription.remainingListings <= 0) {
+        throw new Error(
+          "You have no remaining listings in your subscription quota. Please upgrade your plan or wait for quota renewal."
+        );
+      }
+
+      // Check max photos per listing
+      const imageCount = data.images?.length || 0;
+      if (imageCount > plan.quotaPhotosPerListing) {
+        throw new Error(
+          `Your plan allows a maximum of ${plan.quotaPhotosPerListing} photos per listing. You have provided ${imageCount} photos.`
+        );
+      }
+
+      // Check max videos per listing (assuming videos are in images array or separate)
+      // For now, we'll check if there's a video field in the future
+      // This can be extended when video upload is implemented
+
+      // Check max categories per listing
+      // Note: Currently listings have single categoryId, but if multiple categories are supported in future
+      // This check would validate against plan.maxCategories
+
+      // Check if trying to use features not available in plan
+      // If sticky/featured features are requested but not in plan, throw error
+      // For now, we'll assume these are handled separately via boost purchases
+
+      // Store subscription ID for quota decrement after successful creation
+      subscriptionIdForQuota = subscription.id;
+    }
+
     // Generate unique slug
     const slug = await ensureUniqueListingSlug(data.title);
 
@@ -259,56 +345,76 @@ export const ListingService = {
       });
     }
 
-    return prisma.listing.create({
-      data: {
-        userId: data.userId,
-        categoryId: data.categoryId,
-        locationId: finalLocationId,
-        title: data.title,
-        slug,
-        description: data.description,
-        price: data.price,
-        currency: data.currency as any,
-        condition: data.condition as any,
-        negotiable: data.negotiable ?? true,
-        attributes: data.attributes || null,
-        status: (data.status as any) || "DRAFT",
-        isPhoneVisible: data.isPhoneVisible ?? true,
-        images: {
-          create: imagesData,
-        },
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            username: true,
-            email: true,
+    // Create listing using transaction to ensure atomicity
+    const listing = await prisma.$transaction(async (tx) => {
+      // Create the listing
+      const created = await tx.listing.create({
+        data: {
+          userId: data.userId,
+          categoryId: data.categoryId,
+          locationId: finalLocationId,
+          title: data.title,
+          slug,
+          description: data.description,
+          price: data.price,
+          currency: data.currency as any,
+          condition: data.condition as any,
+          negotiable: data.negotiable ?? true,
+          attributes: data.attributes || null,
+          status: (data.status as any) || "DRAFT",
+          isPhoneVisible: data.isPhoneVisible ?? true,
+          images: {
+            create: imagesData,
           },
         },
-        category: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
+        include: {
+          user: {
+            select: {
+              id: true,
+              username: true,
+              email: true,
+            },
+          },
+          category: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+            },
+          },
+          location: {
+            select: {
+              id: true,
+              country: true,
+              state: true,
+              city: true,
+              area: true,
+              lat: true,
+              lng: true,
+            },
+          },
+          images: {
+            orderBy: { sortOrder: "asc" },
           },
         },
-        location: {
-          select: {
-            id: true,
-            country: true,
-            state: true,
-            city: true,
-            area: true,
-            lat: true,
-            lng: true,
+      });
+
+      // Decrement quota only after successful listing creation (for non-admin users)
+      if (subscriptionIdForQuota) {
+        await tx.subscription.update({
+          where: { id: subscriptionIdForQuota },
+          data: {
+            remainingListings: {
+              decrement: 1,
+            },
           },
-        },
-        images: {
-          orderBy: { sortOrder: "asc" },
-        },
-      },
+        });
+      }
+
+      return created;
     });
+
+    return listing;
   },
 
   async update(id: number, data: {

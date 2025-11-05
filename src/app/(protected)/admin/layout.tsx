@@ -12,12 +12,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     // FLEX LAYOUT: wrapper is a row with sidebar + content
     <div className="flex min-h-screen w-full flex-row">
-      <Sidebar collapsed={collapsed} onToggle={toggle} />
+      {/* STICKY SIDEBAR */}
+      <div className="sticky top-0 h-screen">
+        <Sidebar collapsed={collapsed} onToggle={toggle} />
+      </div>
 
       {/* MAIN COLUMN */}
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar />
-        <main className="flex-1 p-4 md:p-6">
+        <main className="flex-1 p-4 md:p-6 overflow-auto">
           {children}
         </main>
       </div>

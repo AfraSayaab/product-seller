@@ -1,4 +1,3 @@
-
 // components/admin/StatsGrid.tsx
 "use client";
 import * as React from "react";
@@ -10,7 +9,12 @@ export type AdminStats = {
   totalUser: number;
   totalProducts: number;
   totalCategory: number;
-  planPurchased: number;
+  revenue: number;
+  totalListings: number;
+  pendingListings: number;
+  totalPlans: number;
+  activeSubscriptions: number;
+  totalOrders: number;
 };
 
 export default function StatsGrid() {
@@ -34,13 +38,22 @@ export default function StatsGrid() {
   }, [fetchStats]);
 
   const n = (v?: number) => (typeof v === "number" ? v.toLocaleString() : "—");
+  const formatCurrency = (v?: number) => {
+    if (typeof v !== "number") return "—";
+    return `PKR ${v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
 
   return (
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
       <Stat title="Total Users" value={n(stats?.totalUser)} loading={loading} />
       <Stat title="Active Products" value={n(stats?.totalProducts)} loading={loading} />
       <Stat title="Categories" value={n(stats?.totalCategory)} loading={loading} />
-      <Stat title="Plans Purchased" value={n(stats?.planPurchased)} loading={loading} />
+      <Stat title="Total Revenue" value={formatCurrency(stats?.revenue)} loading={loading} />
+      <Stat title="Total Listings" value={n(stats?.totalListings)} loading={loading} />
+      <Stat title="Pending Listings" value={n(stats?.pendingListings)} loading={loading} />
+      <Stat title="Active Plans" value={n(stats?.totalPlans)} loading={loading} />
+      <Stat title="Active Subscriptions" value={n(stats?.activeSubscriptions)} loading={loading} />
+      {/* <Stat title="Total Orders" value={n(stats?.totalOrders)} loading={loading} /> */}
     </div>
   );
 }
