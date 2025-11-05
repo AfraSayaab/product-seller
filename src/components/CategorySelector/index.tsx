@@ -76,8 +76,14 @@ export default function ParentCategorySelect({
 
   const debouncedQ = useDebounce(q, debounceMs);
 
+  // Use ref to prevent infinite loops with fetchItems
+  const fetchItemsRef = React.useRef<((pageNum?: number) => Promise<void>) | null>(null);
+  
   const fetchItems = React.useCallback(
     async (pageNum = 1) => {
+      // Prevent fetching if disabled
+      if (disabled) return;
+      
       try {
         setLoading(true);
         setError(null);
@@ -109,18 +115,21 @@ export default function ParentCategorySelect({
         setLoading(false);
       }
     },
-    [apiPath, pageSize, debouncedQ, minChars, excludeId, defaultSort]
+    [apiPath, pageSize, debouncedQ, minChars, excludeId, defaultSort, disabled]
   );
 
-  React.useEffect(() => {
-    if (!open) return;
-    fetchItems(1);
-  }, [open, fetchItems]);
+  // Store latest fetchItems in ref
+  fetchItemsRef.current = fetchItems;
 
+  // Combined effect to prevent double fetching
   React.useEffect(() => {
-    if (!open) return;
-    fetchItems(1);
-  }, [debouncedQ]); // eslint-disable-line
+    if (!open || disabled) return;
+    const timeoutId = setTimeout(() => {
+      fetchItemsRef.current?.(1);
+    }, 0);
+    return () => clearTimeout(timeoutId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, debouncedQ]); // Only depend on open and debouncedQ
 
   React.useEffect(() => {
     const onDocClick = (e: MouseEvent) => {
