@@ -1,0 +1,207 @@
+{
+  "info": {
+    "name": "Listing API Examples",
+    "description": "Postman collection examples for Listing API with location details",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Create Listing with Location Object",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"categoryId\": 1,\n  \"location\": {\n    \"country\": \"PK\",\n    \"state\": \"Punjab\",\n    \"city\": \"Lahore\",\n    \"area\": \"Gulberg\",\n    \"lat\": 31.5204,\n    \"lng\": 74.3587\n  },\n  \"title\": \"Brand New iPhone 15 Pro Max\",\n  \"description\": \"Unopened iPhone 15 Pro Max 256GB in Natural Titanium. Still sealed in box with all accessories.\",\n  \"price\": 350000,\n  \"currency\": \"PKR\",\n  \"condition\": \"NEW\",\n  \"negotiable\": true,\n  \"status\": \"DRAFT\",\n  \"isPhoneVisible\": true,\n  \"images\": [\n    {\n      \"url\": \"https://example.com/images/iphone1.jpg\",\n      \"sortOrder\": 0,\n      \"isPrimary\": true\n    },\n    {\n      \"url\": \"https://example.com/images/iphone2.jpg\",\n      \"sortOrder\": 1,\n      \"isPrimary\": false\n    }\n  ],\n  \"attributes\": {\n    \"brand\": \"Apple\",\n    \"model\": \"iPhone 15 Pro Max\",\n    \"storage\": \"256GB\",\n    \"color\": \"Natural Titanium\"\n  }\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/listings",
+          "host": ["{{base_url}}"],
+          "path": ["api", "listings"]
+        }
+      }
+    },
+    {
+      "name": "Create Listing with Location ID",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"categoryId\": 1,\n  \"locationId\": 5,\n  \"title\": \"Samsung Galaxy S24 Ultra\",\n  \"description\": \"Excellent condition Samsung Galaxy S24 Ultra 512GB. Used for 2 months only.\",\n  \"price\": 280000,\n  \"currency\": \"PKR\",\n  \"condition\": \"LIKE_NEW\",\n  \"negotiable\": false,\n  \"status\": \"DRAFT\",\n  \"isPhoneVisible\": true,\n  \"images\": [\n    {\n      \"url\": \"https://example.com/images/samsung1.jpg\",\n      \"sortOrder\": 0,\n      \"isPrimary\": true\n    }\n  ]\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/listings",
+          "host": ["{{base_url}}"],
+          "path": ["api", "listings"]
+        }
+      }
+    },
+    {
+      "name": "Create Listing with Minimal Location",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"categoryId\": 2,\n  \"location\": {\n    \"country\": \"PK\",\n    \"city\": \"Karachi\"\n  },\n  \"title\": \"MacBook Pro M3\",\n  \"description\": \"MacBook Pro 14-inch with M3 chip, 16GB RAM, 512GB SSD\",\n  \"price\": 450000,\n  \"currency\": \"PKR\",\n  \"condition\": \"USED\",\n  \"negotiable\": true,\n  \"status\": \"DRAFT\",\n  \"isPhoneVisible\": true,\n  \"images\": []\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/listings",
+          "host": ["{{base_url}}"],
+          "path": ["api", "listings"]
+        }
+      }
+    },
+    {
+      "name": "Update Listing with Location Object",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"location\": {\n    \"country\": \"PK\",\n    \"state\": \"Sindh\",\n    \"city\": \"Karachi\",\n    \"area\": \"Clifton\",\n    \"lat\": 24.8138,\n    \"lng\": 67.0225\n  },\n  \"title\": \"Updated Title - iPhone 15 Pro Max\",\n  \"price\": 340000,\n  \"status\": \"ACTIVE\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/listings/{{listing_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["api", "listings", "{{listing_id}}"]
+        }
+      }
+    },
+    {
+      "name": "Update Listing with Location ID",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"locationId\": 10,\n  \"title\": \"Updated Listing Title\",\n  \"description\": \"Updated description here\",\n  \"price\": 300000\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/listings/{{listing_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["api", "listings", "{{listing_id}}"]
+        }
+      }
+    },
+    {
+      "name": "Update Listing - Remove Location",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"location\": null,\n  \"title\": \"Listing without location\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/listings/{{listing_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["api", "listings", "{{listing_id}}"]
+        }
+      }
+    },
+    {
+      "name": "Admin Create Listing for User",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{admin_auth_token}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userId\": 2,\n  \"categoryId\": 1,\n  \"location\": {\n    \"country\": \"PK\",\n    \"state\": \"Khyber Pakhtunkhwa\",\n    \"city\": \"Peshawar\",\n    \"area\": \"University Town\",\n    \"lat\": 34.0151,\n    \"lng\": 71.5249\n  },\n  \"title\": \"Admin Created Listing\",\n  \"description\": \"This listing was created by admin for user ID 2\",\n  \"price\": 150000,\n  \"currency\": \"PKR\",\n  \"condition\": \"USED\",\n  \"negotiable\": true,\n  \"status\": \"ACTIVE\",\n  \"isPhoneVisible\": true,\n  \"images\": []\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/listings",
+          "host": ["{{base_url}}"],
+          "path": ["api", "listings"]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "auth_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "admin_auth_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "listing_id",
+      "value": "1",
+      "type": "string"
+    }
+  ]
+}
+

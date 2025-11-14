@@ -41,7 +41,6 @@ type Listing = {
     area: string | null;
   };
   images?: Array<{ url: string; isPrimary: boolean }>;
-  user?: { id: number; username: string; email: string };
 };
 
 type ListResponse = {
@@ -51,7 +50,7 @@ type ListResponse = {
   q: string;
 };
 
-export default function AdminListingsPage() {
+export default function UserListingsPage() {
   const router = useRouter();
   const [query, setQuery] = React.useState("");
   const debounced = useDebounce(query, 400);
@@ -76,6 +75,21 @@ export default function AdminListingsPage() {
     sortRef.current = data.sort;
   }, [data.pagination, data.sort]);
 
+  const [currentUserId, setCurrentUserId] = React.useState<number | null>(null);
+
+  // Fetch current user ID
+  React.useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const user = await api<{ id: number }>("/api/auth/me");
+        setCurrentUserId(user.id);
+      } catch (error) {
+        console.error("Failed to fetch current user:", error);
+      }
+    };
+    fetchCurrentUser();
+  }, []);
+
   const fetchListings = React.useCallback(
     async (
       page = 1,
@@ -83,16 +97,19 @@ export default function AdminListingsPage() {
       sort?: string,
       q?: string
     ) => {
+      if (!currentUserId) return; // Wait for user ID
+
       setLoading(true);
       try {
         const currentPageSize = pageSize ?? paginationRef.current.pageSize;
         const currentSort = sort ?? sortRef.current;
         const currentQ = q ?? debounced;
 
+        // Filter by current user ID
         const res = await api<ListResponse>(
           `/api/listings?page=${page}&pageSize=${currentPageSize}&sort=${encodeURIComponent(
             currentSort
-          )}&q=${encodeURIComponent(currentQ)}`
+          )}&q=${encodeURIComponent(currentQ)}&userId=${currentUserId}`
         );
         setData(res);
       } catch (e: any) {
@@ -101,13 +118,15 @@ export default function AdminListingsPage() {
         setLoading(false);
       }
     },
-    [debounced]
+    [debounced, currentUserId]
   );
 
   React.useEffect(() => {
-    fetchListings(1);
+    if (currentUserId) {
+      fetchListings(1);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debounced, refreshKey]);
+  }, [debounced, refreshKey, currentUserId]);
 
   const handlePageChange = React.useCallback((p: number) => {
     fetchListings(p);
@@ -139,12 +158,12 @@ export default function AdminListingsPage() {
           <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-2">
               <Package className="h-5 w-5" />
-              <CardTitle>Listings</CardTitle>
+              <CardTitle>My Listings</CardTitle>
             </div>
 
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
               <Input
-                placeholder="Search listings…"
+                placeholder="Search my listings…"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 className="w-full sm:w-64"
@@ -164,8 +183,8 @@ export default function AdminListingsPage() {
                   className="flex-1 sm:flex-initial"
                 >
                   <Plus className="h-4 w-4 mr-2" /> 
-                  <span className="hidden sm:inline">Add Listing</span>
-                  <span className="sm:hidden">Add</span>
+                  <span className="hidden sm:inline">Create Listing</span>
+                  <span className="sm:hidden">Create</span>
                 </Button>
               </div>
             </div>
@@ -181,7 +200,7 @@ export default function AdminListingsPage() {
               onPageSizeChange={handlePageSizeChange}
               onSortChange={handleSortChange}
               onChanged={handleRefresh}
-              isAdmin={true}
+              isAdmin={false}
             />
           </CardContent>
         </Card>
@@ -195,10 +214,11 @@ export default function AdminListingsPage() {
           <ListingForm
             onSuccess={handleCreated}
             onCancel={() => setOpenAdd(false)}
-            isAdmin={true}
+            isAdmin={false}
           />
         </DialogContent>
       </Dialog>
     </div>
   );
 }
+

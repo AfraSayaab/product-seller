@@ -29,10 +29,9 @@ type NavItem = {
 // ---- Nav Data ----
 const NAV_ITEMS: NavItem[] = [
     { label: "Dashboard", href: "/user", icon: LayoutDashboard },
-    { label: "Users", href: "/users/listing", icon: Users },
-    { label: "Products", href: "/dashboard/admin/products", icon: Package },
-    { label: "Categories", href: "/dashboard/admin/categories", icon: Tags },
-    { label: "Settings", href: "/dashboard/admin/settings", icon: Settings },
+    { label: "My Listings", href: "/user/listings", icon: Package },
+    { label: "Active Plan", href: "/user/plan", icon: Package },
+    { label: "Settings", href: "/user/settings", icon: Settings },
 ];
 
 export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
