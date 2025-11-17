@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import ParentCategorySelect from "@/components/CategorySelector";
 import SortableImageUploader from "@/components/uploader/SortableImageUploader";
 import GoogleMapsLocationPicker from "@/components/location/GoogleMapsLocationPicker";
@@ -59,11 +60,22 @@ export default function ListingForm({
   isAdmin = false,
 }: ListingFormProps) {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  // Helper to convert plain text to HTML if needed
+  const normalizeDescription = (desc: string | undefined): string => {
+    if (!desc) return "";
+    // If it's already HTML (contains tags), return as is
+    if (/<[^>]+>/.test(desc)) {
+      return desc;
+    }
+    // Otherwise, wrap in paragraph tag
+    return `<p>${desc}</p>`;
+  };
+
   const [formData, setFormData] = React.useState<ListingFormData>({
     categoryId: initialData?.categoryId || null,
     location: initialData?.location || null,
     title: initialData?.title || "",
-    description: initialData?.description || "",
+    description: normalizeDescription(initialData?.description),
     price: initialData?.price || 0,
     currency: initialData?.currency || "PKR",
     condition: initialData?.condition || "USED",
@@ -135,7 +147,9 @@ export default function ListingForm({
         setIsSubmitting(false);
         return;
       }
-      if (!formData.description.trim()) {
+      // Strip HTML tags for validation (check if there's actual content)
+      const textContent = formData.description.replace(/<[^>]*>/g, "").trim();
+      if (!textContent) {
         toast.error("Description is required");
         setIsSubmitting(false);
         return;
@@ -203,7 +217,7 @@ export default function ListingForm({
     <form onSubmit={handleSubmit} className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>{listingId ? "Edit Listing" : "Create New Listing"}</CardTitle>
+          <CardTitle>{null}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Category */}
@@ -255,13 +269,12 @@ export default function ListingForm({
             <Label>
               Description <span className="text-destructive">*</span>
             </Label>
-            <Textarea
-              value={formData.description}
-              onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
-              placeholder="Describe your listing in detail..."
-              rows={6}
+            <RichTextEditor
+              value={formData.description || ""}
+              onChange={(value) => setFormData((prev) => ({ ...prev, description: value }))}
+              placeholder="Describe your listing in detail... You can use bold, italic, lists, and links to format your description."
               disabled={isSubmitting}
-              required
+              minHeight="250px"
             />
           </div>
 
