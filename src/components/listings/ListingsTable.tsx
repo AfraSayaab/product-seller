@@ -253,7 +253,7 @@ export default function ListingsTable({
                     )}
                   </TableCell>
                   <TableCell>
-                    <span className="font-medium">{formatPrice(row.price, row.currency)}</span>
+                    <span className="font-medium">{'£' + row.price}</span>
                   </TableCell>
                   <TableCell>
                     <Badge
