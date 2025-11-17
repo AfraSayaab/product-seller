@@ -27,7 +27,7 @@ function SelectValue({
 const SelectTrigger = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger> & {
-    size?: "sm" | "default"
+  size?: "sm" | "default"
   }
 >(({ className, size, children, ...props }, ref) => {
   const sizeClass = size === "sm" ? "h-8" : "h-9";

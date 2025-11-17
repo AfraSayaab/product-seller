@@ -5,7 +5,7 @@ import { Package, Plus, RefreshCcw } from "lucide-react";
 import { toast } from "sonner";
 import { useDebounce } from "@/lib/use-debounce";
 import { api } from "@/lib/api";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,39 +19,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import ListingForm from "@/components/listings/ListingForm";
-
-type Listing = {
-  id: number;
-  title: string;
-  slug: string;
-  price: number;
-  currency: string;
-  condition: string;
-  status: string;
-  viewsCount: number;
-  favoritesCount: number;
-  createdAt: string;
-  updatedAt: string;
-  category?: { id: number; name: string; slug: string };
-  location?: {
-    id: number;
-    country: string;
-    state: string | null;
-    city: string;
-    area: string | null;
-  };
-  images?: Array<{ url: string; isPrimary: boolean }>;
-};
-
-type ListResponse = {
-  items: Listing[];
-  pagination: { page: number; pageSize: number; total: number; totalPages: number };
-  sort: string;
-  q: string;
-};
+import type { ListResponse } from "@/types/listings";
 
 export default function UserListingsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [query, setQuery] = React.useState("");
   const debounced = useDebounce(query, 400);
 
@@ -66,10 +38,9 @@ export default function UserListingsPage() {
     q: "",
   });
 
-  // Use refs to track pagination state to prevent infinite loops
   const paginationRef = React.useRef(data.pagination);
   const sortRef = React.useRef(data.sort);
-  
+
   React.useEffect(() => {
     paginationRef.current = data.pagination;
     sortRef.current = data.sort;
@@ -77,7 +48,6 @@ export default function UserListingsPage() {
 
   const [currentUserId, setCurrentUserId] = React.useState<number | null>(null);
 
-  // Fetch current user ID
   React.useEffect(() => {
     const fetchCurrentUser = async () => {
       try {
@@ -85,19 +55,22 @@ export default function UserListingsPage() {
         setCurrentUserId(user.id);
       } catch (error) {
         console.error("Failed to fetch current user:", error);
+        toast.error("Could not load your profile. Please refresh.");
       }
     };
     fetchCurrentUser();
   }, []);
 
+  React.useEffect(() => {
+    if (searchParams?.get("create") === "1") {
+      setOpenAdd(true);
+      router.replace("/user/listings", { scroll: false });
+    }
+  }, [router, searchParams]);
+
   const fetchListings = React.useCallback(
-    async (
-      page = 1,
-      pageSize?: number,
-      sort?: string,
-      q?: string
-    ) => {
-      if (!currentUserId) return; // Wait for user ID
+    async (page = 1, pageSize?: number, sort?: string, q?: string) => {
+      if (!currentUserId) return;
 
       setLoading(true);
       try {
@@ -105,7 +78,6 @@ export default function UserListingsPage() {
         const currentSort = sort ?? sortRef.current;
         const currentQ = q ?? debounced;
 
-        // Filter by current user ID
         const res = await api<ListResponse>(
           `/api/listings?page=${page}&pageSize=${currentPageSize}&sort=${encodeURIComponent(
             currentSort
@@ -125,20 +97,28 @@ export default function UserListingsPage() {
     if (currentUserId) {
       fetchListings(1);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debounced, refreshKey, currentUserId]);
+  }, [currentUserId, refreshKey, fetchListings]);
 
-  const handlePageChange = React.useCallback((p: number) => {
-    fetchListings(p);
-  }, [fetchListings]);
+  const handlePageChange = React.useCallback(
+    (p: number) => {
+      fetchListings(p);
+    },
+    [fetchListings]
+  );
 
-  const handlePageSizeChange = React.useCallback((ps: number) => {
-    fetchListings(1, ps);
-  }, [fetchListings]);
+  const handlePageSizeChange = React.useCallback(
+    (ps: number) => {
+      fetchListings(1, ps);
+    },
+    [fetchListings]
+  );
 
-  const handleSortChange = React.useCallback((s: string) => {
-    fetchListings(1, undefined, s);
-  }, [fetchListings]);
+  const handleSortChange = React.useCallback(
+    (s: string) => {
+      fetchListings(1, undefined, s);
+    },
+    [fetchListings]
+  );
 
   const handleRefresh = React.useCallback(() => {
     setRefreshKey((k) => k + 1);
@@ -153,43 +133,36 @@ export default function UserListingsPage() {
     <div className="flex flex-col gap-4 p-4 sm:p-6">
       <div className="relative">
         {loading && <LoaderOverlay label="Fetching listings..." />}
-        
         <Card>
-          <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <CardHeader className="space-y-4">
             <div className="flex items-center gap-2">
-              <Package className="h-5 w-5" />
-              <CardTitle>My Listings</CardTitle>
+              <Package className="h-5 w-5 text-primary" />
+              <div>
+                <CardTitle>My listings</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Manage and optimize every listing from one place
+                </p>
+              </div>
             </div>
-
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+            <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
               <Input
                 placeholder="Search my listings…"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                className="w-full sm:w-64"
+                className="w-full md:w-72"
               />
               <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  onClick={handleRefresh}
-                  disabled={loading}
-                  className="flex-1 sm:flex-initial"
-                >
-                  <RefreshCcw className="h-4 w-4 mr-2" /> 
-                  <span className="hidden sm:inline">Refresh</span>
+                <Button variant="outline" onClick={handleRefresh} disabled={loading}>
+                  <RefreshCcw className="mr-2 h-4 w-4" />
+                  Refresh
                 </Button>
-                <Button 
-                  onClick={() => setOpenAdd(true)}
-                  className="flex-1 sm:flex-initial"
-                >
-                  <Plus className="h-4 w-4 mr-2" /> 
-                  <span className="hidden sm:inline">Create Listing</span>
-                  <span className="sm:hidden">Create</span>
+                <Button onClick={() => setOpenAdd(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Create listing
                 </Button>
               </div>
             </div>
           </CardHeader>
-
           <CardContent className="p-0 sm:p-6">
             <ListingsTable
               rows={data.items}

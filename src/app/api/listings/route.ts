@@ -208,7 +208,7 @@ export async function POST(req: NextRequest) {
       console.error("ListingCreateSchema is undefined");
       return NextResponse.json(fail("Schema validation error"), { status: 500 });
     }
-    
+
     const parse = ListingCreateSchema.safeParse(body);
 
     if (!parse.success) {

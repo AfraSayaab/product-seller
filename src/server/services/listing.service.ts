@@ -775,6 +775,192 @@ export const ListingService = {
 
     return { deleted: true };
   },
+
+  async userMetrics(userId: number) {
+    const where = {
+      userId,
+      deletedAt: null,
+    };
+
+    const now = new Date();
+    const startOfCurrentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const sixMonthsAgo = new Date(startOfCurrentMonth);
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
+
+    const [
+      totalListings,
+      statusCounts,
+      aggregateCounts,
+      recentListingsRaw,
+      favoriteListingsRaw,
+      trendSource,
+    ] = await Promise.all([
+      prisma.listing.count({ where }),
+      prisma.listing.groupBy({
+        by: ["status"],
+        where,
+        _count: {
+          _all: true,
+        },
+      }),
+      prisma.listing.aggregate({
+        where,
+        _sum: {
+          viewsCount: true,
+          favoritesCount: true,
+        },
+      }),
+      prisma.listing.findMany({
+        where,
+        orderBy: { updatedAt: "desc" },
+        take: 6,
+        select: {
+          id: true,
+          title: true,
+          status: true,
+          price: true,
+          currency: true,
+          createdAt: true,
+          updatedAt: true,
+          viewsCount: true,
+          favoritesCount: true,
+        },
+      }),
+      prisma.listing.findMany({
+        where,
+        orderBy: [
+          { favoritesCount: "desc" },
+          { viewsCount: "desc" },
+          { updatedAt: "desc" },
+        ],
+        take: 5,
+        select: {
+          id: true,
+          title: true,
+          status: true,
+          price: true,
+          currency: true,
+          favoritesCount: true,
+          viewsCount: true,
+          createdAt: true,
+          images: {
+            orderBy: { sortOrder: "asc" },
+            take: 1,
+            select: { url: true },
+          },
+        },
+      }),
+      prisma.listing.findMany({
+        where: {
+          ...where,
+          createdAt: {
+            gte: sixMonthsAgo,
+          },
+        },
+        select: {
+          id: true,
+          createdAt: true,
+          viewsCount: true,
+          favoritesCount: true,
+        },
+      }),
+    ]);
+
+    const statusBreakdown = statusCounts.reduce<Record<string, number>>((acc, curr) => {
+      acc[curr.status] = curr._count?._all ?? 0;
+      return acc;
+    }, {});
+
+    const totalViews = aggregateCounts._sum.viewsCount ?? 0;
+    const totalFavorites = aggregateCounts._sum.favoritesCount ?? 0;
+
+    const totals = {
+      totalListings,
+      active: statusBreakdown["ACTIVE"] || 0,
+      draft: statusBreakdown["DRAFT"] || 0,
+      pending: statusBreakdown["PENDING"] || 0,
+      sold: statusBreakdown["SOLD"] || 0,
+      totalViews,
+      totalFavorites,
+      avgViewsPerListing: totalListings > 0 ? Math.round(totalViews / totalListings) : 0,
+      engagementRate: totalViews > 0 ? Number(((totalFavorites / totalViews) * 100).toFixed(2)) : 0,
+      statusBreakdown,
+    };
+
+    const months: {
+      key: string;
+      label: string;
+      year: number;
+      listings: number;
+      views: number;
+      favorites: number;
+    }[] = [];
+
+    for (let offset = 5; offset >= 0; offset--) {
+      const date = new Date(startOfCurrentMonth);
+      date.setMonth(date.getMonth() - offset);
+      const key = `${date.getFullYear()}-${date.getMonth()}`;
+      months.push({
+        key,
+        label: date.toLocaleString("en-US", { month: "short" }),
+        year: date.getFullYear(),
+        listings: 0,
+        views: 0,
+        favorites: 0,
+      });
+    }
+
+    const monthMap = new Map(months.map((m) => [m.key, m]));
+
+    for (const item of trendSource) {
+      const created = new Date(item.createdAt);
+      const key = `${created.getFullYear()}-${created.getMonth()}`;
+      const bucket = monthMap.get(key);
+      if (bucket) {
+        bucket.listings += 1;
+        bucket.views += item.viewsCount ?? 0;
+        bucket.favorites += item.favoritesCount ?? 0;
+      }
+    }
+
+    const monthlyTrend = months.map((m) => ({
+      month: `${m.label} ${String(m.year).slice(-2)}`,
+      listings: m.listings,
+      views: m.views,
+      favorites: m.favorites,
+    }));
+
+    const recentListings = recentListingsRaw.map((listing) => ({
+      id: listing.id,
+      title: listing.title,
+      status: listing.status,
+      price: listing.price ? Number(listing.price) : 0,
+      currency: listing.currency,
+      createdAt: listing.createdAt,
+      updatedAt: listing.updatedAt,
+      viewsCount: listing.viewsCount ?? 0,
+      favoritesCount: listing.favoritesCount ?? 0,
+    }));
+
+    const topFavorites = favoriteListingsRaw.map((listing) => ({
+      id: listing.id,
+      title: listing.title,
+      status: listing.status,
+      price: listing.price ? Number(listing.price) : 0,
+      currency: listing.currency,
+      favoritesCount: listing.favoritesCount ?? 0,
+      viewsCount: listing.viewsCount ?? 0,
+      createdAt: listing.createdAt,
+      primaryImage: listing.images?.[0]?.url || null,
+    }));
+
+    return {
+      totals,
+      monthlyTrend,
+      topFavorites,
+      recentListings,
+    };
+  },
 };
 
 

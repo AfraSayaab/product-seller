@@ -1,94 +1,153 @@
-// app/(protected)/dashboard/admin/page.tsx
+"use client";
+
 import * as React from "react";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+
+import { api } from "@/lib/api";
+import type { DashboardUser, UserListingMetrics } from "@/types/listings";
+import UserDashboardHero from "@/components/dashboard/user/UserDashboardHero";
+import UserStatCards from "@/components/dashboard/user/UserStatCards";
+import UserPerformanceChart from "@/components/dashboard/user/UserPerformanceChart";
+import UserTopFavorites from "@/components/dashboard/user/UserTopFavorites";
+import UserRecentActivity from "@/components/dashboard/user/UserRecentActivity";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Package, Sparkles } from "lucide-react";
 
-// ---- Stat Card Component ----
-function Stat({ title, value, hint }: { title: string; value: string; hint?: string }) {
-    return (
-        <Card>
-            <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <div className="text-2xl font-semibold">{value}</div>
-                {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
-            </CardContent>
-        </Card>
-    );
-}
-
-// ---- Recent Users Table ----
-function RecentTable() {
-    return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Recent Users</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                        <thead>
-                            <tr className="text-left text-muted-foreground">
-                                <th className="pb-2">User</th>
-                                <th className="pb-2">Email</th>
-                                <th className="pb-2">Role</th>
-                                <th className="pb-2">Joined</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y">
-                            {[
-                                { u: "sarah", e: "sarah@example.com", r: "ADMIN", j: "2025-10-21" },
-                                { u: "john", e: "john@example.com", r: "USER", j: "2025-10-20" },
-                                { u: "maria", e: "maria@example.com", r: "USER", j: "2025-10-19" },
-                            ].map((row) => (
-                                <tr key={row.e}>
-                                    <td className="py-2">{row.u}</td>
-                                    <td className="py-2 text-muted-foreground">{row.e}</td>
-                                    <td className="py-2">
-                                        <span className={cn(
-                                            "inline-flex items-center rounded-full px-2 py-0.5 text-xs",
-                                            row.r === "ADMIN" ? "bg-foreground text-background" : "bg-muted text-foreground"
-                                        )}>{row.r}</span>
-                                    </td>
-                                    <td className="py-2 text-muted-foreground">{row.j}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            </CardContent>
-        </Card>
-    );
-}
-
-// ---- Dashboard Page Content ----
 export default function UserDashboardPage() {
-    return (
-        <>
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                <Stat title="Total Users" value="12,483" hint="+3.1% from last week" />
-                <Stat title="Active Products" value="842" hint="-1.2% from yesterday" />
-                <Stat title="Orders (24h)" value="1,203" />
-                <Stat title="Revenue (24h)" value="$38,920" />
-            </div>
+  const router = useRouter();
+  const [currentUser, setCurrentUser] = React.useState<DashboardUser | null>(null);
+  const [profileLoading, setProfileLoading] = React.useState(true);
+  const [metrics, setMetrics] = React.useState<UserListingMetrics | null>(null);
+  const [metricsLoading, setMetricsLoading] = React.useState(true);
+  const [metricsError, setMetricsError] = React.useState(false);
+  const [refreshKey, setRefreshKey] = React.useState(0);
 
-            <div className="mt-6 grid gap-4 lg:grid-cols-3">
-                <div className="lg:col-span-2">
-                    <RecentTable />
-                </div>
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Quick Actions</CardTitle>
-                    </CardHeader>
-                    <CardContent className="flex flex-wrap gap-2">
-                        <Button className="w-full sm:w-auto" variant="default">New Product</Button>
-                        <Button className="w-full sm:w-auto" variant="secondary">Invite User</Button>
-                        <Button className="w-full sm:w-auto" variant="outline">Export CSV</Button>
-                    </CardContent>
-                </Card>
-            </div>
-        </>
-    );
+  const currentUserId = currentUser?.id ?? null;
+
+  const fetchProfile = React.useCallback(async () => {
+    setProfileLoading(true);
+    try {
+      const user = await api<DashboardUser>("/api/auth/me");
+      setCurrentUser(user);
+    } catch (error) {
+      toast.error("Could not load your profile. Please refresh.");
+    } finally {
+      setProfileLoading(false);
+    }
+  }, []);
+
+  const fetchMetrics = React.useCallback(async () => {
+    if (!currentUserId) return;
+    setMetricsLoading(true);
+    setMetricsError(false);
+    try {
+      const res = await api<UserListingMetrics>(`/api/listings/metrics?userId=${currentUserId}`);
+      setMetrics(res);
+    } catch (error: any) {
+      setMetricsError(true);
+      toast.error(error.message || "Failed to load dashboard insights");
+    } finally {
+      setMetricsLoading(false);
+    }
+  }, [currentUserId]);
+
+  React.useEffect(() => {
+    fetchProfile();
+  }, [fetchProfile]);
+
+  React.useEffect(() => {
+    if (currentUserId) {
+      fetchMetrics();
+    }
+  }, [currentUserId, refreshKey, fetchMetrics]);
+
+  const displayName = React.useMemo(() => {
+    if (!currentUser) return "there";
+    if (currentUser.firstName) return currentUser.firstName.split(" ")[0];
+    if (currentUser.username) return currentUser.username;
+    return "there";
+  }, [currentUser]);
+
+  const handleRefresh = React.useCallback(() => {
+    setRefreshKey((key) => key + 1);
+  }, []);
+
+  const handleCreateListing = React.useCallback(() => {
+    router.push("/user/listings?create=1");
+  }, [router]);
+
+  const handleManageListings = React.useCallback(() => {
+    router.push("/user/listings");
+  }, [router]);
+
+  const heroDisabled = profileLoading || metricsLoading;
+
+  return (
+    <div className="flex flex-col gap-6 p-4 sm:p-6">
+      <UserDashboardHero
+        displayName={displayName}
+        totals={metrics?.totals}
+        onRefresh={handleRefresh}
+        onCreateListing={handleCreateListing}
+        refreshDisabled={heroDisabled}
+      />
+
+      <UserStatCards totals={metrics?.totals} loading={metricsLoading} error={metricsError} />
+
+      <div className="grid gap-4 xl:grid-cols-[2fr,1fr]">
+        <UserPerformanceChart data={metrics?.monthlyTrend} loading={metricsLoading} error={metricsError} />
+        <UserTopFavorites items={metrics?.topFavorites} loading={metricsLoading} error={metricsError} />
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <UserRecentActivity
+            items={metrics?.recentListings}
+            loading={metricsLoading}
+            error={metricsError}
+          />
+        </div>
+        <QuickActionsCard
+          onCreateListing={handleCreateListing}
+          onManageListings={handleManageListings}
+          disabled={heroDisabled}
+        />
+      </div>
+    </div>
+  );
+}
+
+function QuickActionsCard({
+  onCreateListing,
+  onManageListings,
+  disabled,
+}: {
+  onCreateListing: () => void;
+  onManageListings: () => void;
+  disabled: boolean;
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Quick actions</CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-3">
+        <Button onClick={onCreateListing} disabled={disabled} className="justify-start gap-2">
+          <Sparkles className="h-4 w-4" />
+          Create new listing
+        </Button>
+        <Button
+          variant="secondary"
+          onClick={onManageListings}
+          disabled={disabled}
+          className="justify-start gap-2"
+        >
+          <Package className="h-4 w-4" />
+          Manage my listings
+        </Button>
+      </CardContent>
+    </Card>
+  );
 }
