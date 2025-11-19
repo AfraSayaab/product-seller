@@ -31,6 +31,7 @@ const NAV_ITEMS: NavItem[] = [
     { label: "Dashboard", href: "/user", icon: LayoutDashboard },
     { label: "My Listings", href: "/user/listings", icon: Package },
     { label: "Active Plan", href: "/user/plan", icon: Package },
+    { label: "Favourite", href: "/user/favourite", icon: Package },
     { label: "Settings", href: "/user/settings", icon: Settings },
 ];
 

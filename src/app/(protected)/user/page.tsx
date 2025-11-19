@@ -98,10 +98,10 @@ export default function UserDashboardPage() {
 
       <div className="grid gap-4 xl:grid-cols-[2fr,1fr]">
         <UserPerformanceChart data={metrics?.monthlyTrend} loading={metricsLoading} error={metricsError} />
-        <UserTopFavorites items={metrics?.topFavorites} loading={metricsLoading} error={metricsError} />
+        {/* <UserTopFavorites items={metrics?.topFavorites} loading={metricsLoading} error={metricsError} /> */}
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
+      {/* <div className="grid gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <UserRecentActivity
             items={metrics?.recentListings}
@@ -114,7 +114,7 @@ export default function UserDashboardPage() {
           onManageListings={handleManageListings}
           disabled={heroDisabled}
         />
-      </div>
+      </div> */}
     </div>
   );
 }
