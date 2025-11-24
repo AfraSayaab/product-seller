@@ -36,6 +36,21 @@ export const ResetPasswordSchema = z
         path: ["confirmPassword"],
     });
 
+export const ChangePasswordSchema = z
+    .object({
+        currentPassword: z.string().min(1, "Current password is required"),
+        newPassword: z.string().min(8, "Password must be at least 8 characters"),
+        confirmPassword: z.string().min(8, "Please confirm your password"),
+    })
+    .refine((d) => d.newPassword === d.confirmPassword, {
+        message: "Passwords do not match",
+        path: ["confirmPassword"],
+    })
+    .refine((d) => d.currentPassword !== d.newPassword, {
+        message: "New password must be different from current password",
+        path: ["newPassword"],
+    });
+
 
 export const ProfileUpdateSchema = z.object({
     firstName: z.string().max(100).optional().nullable(),

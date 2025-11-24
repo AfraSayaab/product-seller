@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import LoaderOverlay from "@/components/ui/LoaderOverlay";
 import PlanCard, { type Plan } from "@/components/plans/PlanCard";
+import { useAuth } from "@/hooks/useAuth";
 
 type PlansResponse = {
   items: Plan[];
@@ -24,9 +25,11 @@ type PlansResponse = {
 export default function PublicPlansPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { isAuthenticated, loading: authLoading } = useAuth();
   const [loading, setLoading] = React.useState(true);
   const [plans, setPlans] = React.useState<Plan[]>([]);
   const [selectedPlanId, setSelectedPlanId] = React.useState<number | null>(null);
+  const [processingPlanId, setProcessingPlanId] = React.useState<number | null>(null);
 
   React.useEffect(() => {
     const planIdParam = searchParams?.get("select");
@@ -51,15 +54,49 @@ export default function PublicPlansPage() {
   }, []);
 
   const handleSelectPlan = React.useCallback(
-    (planId: number) => {
-      // TODO: Implement payment/checkout flow
-      toast.info("Payment integration coming soon. Please contact support to subscribe.");
-      // router.push(`/checkout?planId=${planId}`);
+    async (planId: number) => {
+      // Check if user is authenticated
+      if (!isAuthenticated) {
+        toast.error("Please login to purchase a plan", {
+          description: "You need to be logged in to proceed with the purchase.",
+          action: {
+            label: "Login",
+            onClick: () => router.push("/login?redirect=/plan"),
+          },
+        });
+        return;
+      }
+
+      try {
+        setProcessingPlanId(planId);
+        
+        // Create checkout session
+        const response = await api<{ sessionId: string; url: string; orderId: number }>(
+          "/api/checkout/create",
+          {
+            method: "POST",
+            body: JSON.stringify({ planId }),
+          }
+        );
+
+        // Redirect to Stripe checkout
+        if (response.url) {
+          window.location.href = response.url;
+        } else {
+          throw new Error("No checkout URL received");
+        }
+      } catch (error: any) {
+        console.error("Checkout error:", error);
+        toast.error("Failed to start checkout", {
+          description: error.message || "Please try again later.",
+        });
+        setProcessingPlanId(null);
+      }
     },
-    []
+    [isAuthenticated, router]
   );
 
-  if (loading) {
+  if (loading || authLoading) {
     return (
       <div className="relative min-h-[600px]">
         <LoaderOverlay label="Loading plans..." />
@@ -117,8 +154,9 @@ export default function PublicPlansPage() {
                 plan={plan}
                 isCurrentPlan={selectedPlanId === plan.id}
                 onSelect={handleSelectPlan}
-                buttonText="Get Started"
+                buttonText={processingPlanId === plan.id ? "Processing..." : "Get Started"}
                 variant={plan.isFeatured ? "featured" : "default"}
+                isProcessing={processingPlanId === plan.id}
               />
             ))}
           </div>

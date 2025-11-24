@@ -38,13 +38,14 @@ const NAV_ITEMS: NavItem[] = [
     { label: "Products", href: "/admin/listings", icon: Package },
     { label: "Categories", href: "/admin/categories", icon: Tags },
     { label: "Plans", href: "/admin/plans", icon: CreditCard },
-    { 
-        label: "Settings", 
-        href: "/admin/settings", 
+    {
+        label: "Settings",
+        href: "/admin/settings",
         icon: Settings,
         children: [
-            { label: "API Keys", href: "/admin/settings/api-keys", icon: Key },
             { label: "Profile", href: "/admin/settings/profile", icon: User },
+            { label: "Change Password", href: "/admin/settings/change-password", icon: Key },
+            { label: "API Keys", href: "/admin/settings/api-keys", icon: Key },
         ]
     },
 ];

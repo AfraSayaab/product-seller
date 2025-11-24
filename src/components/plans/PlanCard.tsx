@@ -30,6 +30,7 @@ type PlanCardProps = {
   onSelect?: (planId: number) => void;
   buttonText?: string;
   variant?: "default" | "featured";
+  isProcessing?: boolean;
 };
 
 export default function PlanCard({
@@ -38,6 +39,7 @@ export default function PlanCard({
   onSelect,
   buttonText,
   variant = "default",
+  isProcessing = false,
 }: PlanCardProps) {
   const price = typeof plan.price === "number" ? plan.price : Number(plan.price);
   const formattedPrice = price.toFixed(2);
@@ -110,7 +112,7 @@ export default function PlanCard({
             onClick={() => onSelect(plan.id)}
             className="w-full"
             variant={isFeatured ? "default" : "outline"}
-            disabled={isCurrentPlan}
+            disabled={isCurrentPlan || isProcessing}
           >
             {isCurrentPlan ? "Current Plan" : buttonText || "Select Plan"}
           </Button>
