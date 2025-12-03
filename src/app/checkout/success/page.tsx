@@ -7,8 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
-
-export default function CheckoutSuccessPage() {
+import { Suspense } from "react";
+function CheckoutSuccessPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const sessionId = searchParams?.get("session_id");
@@ -89,3 +89,11 @@ export default function CheckoutSuccessPage() {
   );
 }
 
+
+export default function Page() {
+  return (
+    <Suspense fallback={<div>Loading listings…</div>}>
+      <CheckoutSuccessPage />
+    </Suspense>
+  );
+}

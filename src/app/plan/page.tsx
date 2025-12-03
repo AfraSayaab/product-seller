@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import LoaderOverlay from "@/components/ui/LoaderOverlay";
 import PlanCard, { type Plan } from "@/components/plans/PlanCard";
 import { useAuth } from "@/hooks/useAuth";
-
+import { Suspense } from "react";
 type PlansResponse = {
   items: Plan[];
   pagination: {
@@ -22,7 +22,7 @@ type PlansResponse = {
   };
 };
 
-export default function PublicPlansPage() {
+function PublicPlansPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isAuthenticated, loading: authLoading } = useAuth();
@@ -201,5 +201,12 @@ export default function PublicPlansPage() {
         </Card>
       </div>
     </div>
+  );
+}
+export default function Page() {
+  return (
+    <Suspense fallback={<div>Loading plans…</div>}>
+      <PublicPlansPage />
+    </Suspense>
   );
 }

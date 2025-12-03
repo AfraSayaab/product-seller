@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useSearchParams, useRouter } from 'next/navigation';
-
+import { Suspense } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -33,7 +33,7 @@ const ResetPasswordSchema = z
 
 type ResetPasswordValues = z.infer<typeof ResetPasswordSchema>;
 
-export default function ResetPasswordPage() {
+function ResetPasswordPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const [loading, setLoading] = useState(false);
@@ -241,3 +241,11 @@ export default function ResetPasswordPage() {
     );
 }
 
+
+export default function Page() {
+  return (
+    <Suspense fallback={<div>Loading listings…</div>}>
+      <ResetPasswordPage />
+    </Suspense>
+  );
+}

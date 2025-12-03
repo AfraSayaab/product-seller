@@ -5,8 +5,8 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { XCircle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-
-export default function CheckoutCancelPage() {
+import { Suspense } from "react";
+function CheckoutCancelPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const orderId = searchParams?.get("order_id");
@@ -45,3 +45,12 @@ export default function CheckoutCancelPage() {
   );
 }
 
+
+
+export default function Page() {
+  return (
+    <Suspense fallback={<div>Loading listings…</div>}>
+      <CheckoutCancelPage />
+    </Suspense>
+  );
+}

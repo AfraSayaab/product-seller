@@ -20,8 +20,8 @@ import {
 } from "@/components/ui/dialog";
 import ListingForm from "@/components/listings/ListingForm";
 import type { ListResponse } from "@/types/listings";
-
-export default function UserListingsPage() {
+import { Suspense } from "react";
+ function UserListingsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [query, setQuery] = React.useState("");
@@ -195,3 +195,10 @@ export default function UserListingsPage() {
   );
 }
 
+export default function Page() {
+  return (
+    <Suspense fallback={<div>Loading listings…</div>}>
+      <UserListingsPage />
+    </Suspense>
+  );
+}
