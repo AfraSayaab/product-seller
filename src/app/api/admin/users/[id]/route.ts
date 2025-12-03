@@ -4,13 +4,23 @@ import { prisma } from "@/lib/db";
 import { ok, fail } from "@/lib/responses";
 import { getTokenFromReq, verifyJwt } from "@/lib/auth";
 import bcrypt from "bcrypt";
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
-  const { id } = await params;
-  if (!id) return NextResponse.json(fail("please send the id"), { status: 404 });
-  const user = await prisma.user.findUnique({ where: { id: Number(id) } });
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params; // params is now a Promise<{ id: string }>
+  const numericId = Number(id);
+
+  if (!numericId) {
+    return NextResponse.json(fail("please send the id"), { status: 404 });
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: numericId } });
   if (!user) return NextResponse.json(fail("Not found"), { status: 404 });
+
   return NextResponse.json(ok(user));
 }
+
 
 
 
@@ -157,7 +167,8 @@ async function ensureNotDuplicate(id: number, data: PartialUserUpdate) {
 
 
 // ---- PATCH -----------------------------------------------------------------
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(req: NextRequest,  { params }: { params: Promise<{ id: string }> }
+){
   const headers = new Headers();
 
   try {
@@ -253,12 +264,12 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 }
 
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const token = getTokenFromReq(req);
   const payload = token && verifyJwt(token);
   if (!payload || payload.role !== "ADMIN") return NextResponse.json(fail("Forbidden"), { status: 403 });
 
-  const id = Number(params.id);
+  const id =  Number((await params).id);
   try {
     await prisma.user.delete({ where: { id } });
     return NextResponse.json(ok({ id }));

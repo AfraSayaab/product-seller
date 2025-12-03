@@ -1,7 +1,7 @@
 // components/admin/users/UserEditForm.tsx
 "use client";
 import * as React from "react";
-import { useForm } from "react-hook-form";
+import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { cn } from "@/lib/utils";
@@ -64,7 +64,7 @@ export default function UserEditForm({
   className?: string;
 }) {
   const form = useForm<UserEditInput>({
-    resolver: zodResolver(UserEditSchema),
+    resolver: zodResolver(UserEditSchema) as Resolver<UserEditInput>,
     defaultValues: {
       username: initial?.username || "",
       email: initial?.email || "",

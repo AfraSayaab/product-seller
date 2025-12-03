@@ -26,7 +26,7 @@ const Schema = z.object({
   slug: z.string().min(2, "Slug is required"),
   parentId: z.string().optional().nullable(),
   image: z.string().nullable().optional(),
-  isActive: z.boolean().default(true),
+  isActive: z.boolean(),
   attributeSchema: z.string().optional(),
 });
 
@@ -116,15 +116,18 @@ export default function CategoryEditForm({
         <FormField
           control={form.control}
           name="parentId"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Parent ID (optional)</FormLabel>
-              <FormControl>
-                <Input inputMode="numeric" disabled={submitting} {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+          render={({ field }) => {
+            const { value, ...rest } = field;
+            return (
+              <FormItem>
+                <FormLabel>Parent ID (optional)</FormLabel>
+                <FormControl>
+                  <Input inputMode="numeric" disabled={submitting} {...rest} value={value ?? ""} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            );
+          }}
         />
 
         {/* Image */}

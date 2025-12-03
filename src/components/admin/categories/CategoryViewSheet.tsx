@@ -61,7 +61,7 @@ export default function CategoryViewSheet({
   React.useEffect(() => {
     if (open && categoryId) {
       setLoading(true);
-      api(`/api/admin/categories/${categoryId}`)
+      api<CategoryData>(`/api/admin/categories/${categoryId}`)
         .then((data) => {
           setCategoryData(data);
         })
