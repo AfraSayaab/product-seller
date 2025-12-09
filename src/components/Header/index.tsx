@@ -1,12 +1,14 @@
 // components/hero/TopNav.tsx
 import { Menu, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 type Props = {
   onOpenMenu: () => void;
 };
 
 export const Header = ({ onOpenMenu }: Props) => {
+  const router = useRouter();
   return (
     <header className="relative z-20 flex items-center justify-between px-6 py-4 lg:px-12">
       <div className="flex items-center gap-4">
@@ -27,6 +29,9 @@ export const Header = ({ onOpenMenu }: Props) => {
 
       <div className="flex items-center gap-4">
         <Button
+          onClick={() => {
+            router.push("/plan")
+          }}
           variant="outline"
           className="border-white bg-black/30 text-xs font-semibold uppercase tracking-wide text-white hover:bg-white hover:text-black sm:text-sm"
         >
@@ -38,9 +43,9 @@ export const Header = ({ onOpenMenu }: Props) => {
           className="flex items-center gap-2 text-xs font-medium tracking-wide sm:text-sm"
         >
           <User className="h-4 w-4" />
-          <span>Login</span>
+          <Link href="/login">Login</Link>
           <span className="opacity-60">/</span>
-          <span>Register</span>
+          <Link href="/register">Register</Link>
         </button>
       </div>
     </header>

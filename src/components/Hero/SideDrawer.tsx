@@ -23,7 +23,7 @@ export const SideDrawer = ({ isOpen, onClose }: Props) => (
         type="button"
         aria-label="Close main menu"
         onClick={onClose}
-        className="rounded-full border border-gray-200 p-2 hover:bg-gray-100"
+        className="rounded-full  text-black border hover:border-black p-2 bg-white border-white hover:bg-black hover:text-white transition"
       >
         <X className="h-4 w-4" />
       </button>
