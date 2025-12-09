@@ -8,7 +8,11 @@ type Props = {
   isOpen: boolean;
   onClose: () => void;
 };
-
+const otherLinks = [
+  { name: 'Home', href: '/' },
+  { name: 'About Us', href: '/about' },
+  { name: 'Contact Us', href: '/contact' }
+]
 export const SideDrawer = ({ isOpen, onClose }: Props) => {
   // States for categories, subcategories, loading, and open/close states for subcategories
   const [loading, setLoading] = useState<boolean>(false);
@@ -72,46 +76,65 @@ export const SideDrawer = ({ isOpen, onClose }: Props) => {
             <Loader />
           </div>
         ) : (
-          // Display categories and subcategories
-          categories.map((category) => (
-            <div key={category.id}>
-              <div className="flex items-center">
-                <button
-                  type="button"
-                  className="text-left transition hover:text-emerald-600 flex items-center"
-                  onClick={() => handleCategoryClick(category.id)} // Handle category click
-                >{category.children.length > 0 &&(<>
+          <>{
+            categories.map((category) => (
+              <div key={category.id}>
+                <div className="flex items-center">
+                  <button
+                    type="button"
+                    className="text-left transition hover:text-emerald-600 flex items-center"
+                    onClick={() => handleCategoryClick(category.id)} // Handle category click
+                  >{category.children.length > 0 && (<>
 
-                  {openCategories.has(category.id) ? (
-                    <ChevronUp className="mr-2" />
-                  ) : (
-                    <ChevronDown className="mr-2" />
-                  )}
-                </>)}
-                  {/* Link to the category page */}
-                  <Link href={`/categories/${category.id}`} className="mr-2">
-                    {category.name}
-                  </Link>
-                </button>
+                    {openCategories.has(category.id) ? (
+                      <ChevronUp className="mr-2" />
+                    ) : (
+                      <ChevronDown className="mr-2" />
+                    )}
+                  </>)}
+                    {/* Link to the category page */}
+                    <Link href={`/categories/${category.id}`} className="mr-2">
+                      {category.name}
+                    </Link>
+                  </button>
+                </div>
+
+                {/* Render Subcategories */}
+                {category.children && category.children.length > 0 && openCategories.has(category.id) && (
+                  <ul className="ml-4 mt-2 space-y-1">
+                    {category.children.map((subCategory: any) => (
+                      <li key={subCategory.id}>
+                        <Link
+                          href={`/categories/${category.id}/subcategories/${subCategory.id}`} // Link to subcategory page
+                          className="w-full text-left pl-4 py-1 text-sm transition hover:text-emerald-600"
+                        >
+                          {subCategory.name}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
+            ))}
+            {otherLinks.map((link) => (
+              <div >
 
-              {/* Render Subcategories */}
-              {category.children && category.children.length > 0 && openCategories.has(category.id) && (
-                <ul className="ml-4 mt-2 space-y-1">
-                  {category.children.map((subCategory: any) => (
-                    <li key={subCategory.id}>
-                      <Link
-                        href={`/categories/${category.id}/subcategories/${subCategory.id}`} // Link to subcategory page
-                        className="w-full text-left pl-4 py-1 text-sm transition hover:text-emerald-600"
-                      >
-                        {subCategory.name}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          ))
+                <div className="flex items-center">
+                  <div
+                    className="text-left transition hover:text-emerald-600 flex items-center"
+                  >
+                    <Link href={link.href} className="mr-2">
+                      {link.name}
+                    </Link>
+                  </div>
+
+                </div>
+
+
+              </div>
+            ))}
+          </>
+
         )}
       </nav>
 
