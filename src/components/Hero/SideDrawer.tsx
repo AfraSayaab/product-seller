@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react"; 
+import React, { useState, useEffect } from "react";
 import axios from "axios"; // Import Axios
-import { X, ChevronDown, ChevronUp,  } from "lucide-react"; // Import icons for open/close
+import { X, ChevronDown, ChevronUp, } from "lucide-react"; // Import icons for open/close
 import { Loader } from "../ui/loader"; // Assuming you have a Loader component
 import Link from "next/link"; // For Next.js routing
 
@@ -80,12 +80,14 @@ export const SideDrawer = ({ isOpen, onClose }: Props) => {
                   type="button"
                   className="text-left transition hover:text-emerald-600 flex items-center"
                   onClick={() => handleCategoryClick(category.id)} // Handle category click
-                >
+                >{category.children.length > 0 &&(<>
+
                   {openCategories.has(category.id) ? (
                     <ChevronUp className="mr-2" />
                   ) : (
                     <ChevronDown className="mr-2" />
                   )}
+                </>)}
                   {/* Link to the category page */}
                   <Link href={`/categories/${category.id}`} className="mr-2">
                     {category.name}
@@ -98,7 +100,7 @@ export const SideDrawer = ({ isOpen, onClose }: Props) => {
                 <ul className="ml-4 mt-2 space-y-1">
                   {category.children.map((subCategory: any) => (
                     <li key={subCategory.id}>
-                      <Link 
+                      <Link
                         href={`/categories/${category.id}/subcategories/${subCategory.id}`} // Link to subcategory page
                         className="w-full text-left pl-4 py-1 text-sm transition hover:text-emerald-600"
                       >
