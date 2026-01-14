@@ -140,7 +140,7 @@ export default function SpotlightWardrobeCarousel() {
                                         <Link href="/listings/1">
                                         <Card className="group overflow-hidden rounded-2xl border bg-background shadow-sm transition hover:shadow-md">
                                             {/* IMAGE AREA */}
-                                            <div className="relative aspect-[4/3] w-full overflow-hidden">
+                                            <div className="relative aspect-4/3 w-full overflow-hidden">
                                                 <Image
                                                     src={item.image}
                                                     alt={item.title}
