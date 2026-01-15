@@ -1,5 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 type RelatedItem = {
   id: string;
@@ -36,27 +38,35 @@ export default function RelatedItems() {
 
       <div className="grid grid-cols-2 gap-6 md:grid-cols-3">
         {relatedItems.map((item) => (
-          <Link
-            key={item.id}
-            href={`/listings/${item.id}`}
-            className="group block"
-          >
-            <div className="overflow-hidden rounded-xl border">
-              <Image
-                src={item.image}
-                alt={item.title}
-                width={400}
-                height={400}
-                className="h-60 w-full object-cover transition-transform group-hover:scale-105"
-              />
-            </div>
+          <Link key={item.id} href={`/listings/${item.id}`} className="group">
+            <Card className="overflow-hidden rounded-2xl border bg-background shadow-sm transition hover:shadow-md">
+              {/* IMAGE AREA */}
+              <div className="relative aspect-4/3 w-full overflow-hidden">
+                <Image
+                  src={item.image}
+                  alt={item.title}
+                  fill
+                  className="object-cover transition duration-500 group-hover:scale-[1.03]"
+                  sizes="(max-width: 640px) 88vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw"
+                />
 
-            <div className="mt-3">
-              <h3 className="text-sm font-medium group-hover:underline">
-                {item.title}
-              </h3>
-              <p className="text-sm text-muted-foreground">{item.price}</p>
-            </div>
+                {/* price badge */}
+                <Badge className="absolute left-3 top-3 rounded-md bg-pink-500 px-3 py-1 text-sm font-semibold text-white shadow-sm">
+                  {item.price}
+                </Badge>
+              </div>
+
+              {/* TEXT AREA */}
+              <div className="p-5">
+                <h3 className="line-clamp-1 text-base font-semibold text-foreground">
+                  {item.title}
+                </h3>
+
+                <p className="mt-2 text-sm text-muted-foreground">
+                  View details
+                </p>
+              </div>
+            </Card>
           </Link>
         ))}
       </div>
