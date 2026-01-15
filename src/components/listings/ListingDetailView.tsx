@@ -6,6 +6,7 @@ import SafetyTips from "./details/SafetyTips";
 import ListingDescription from "./details/ListingDescription";
 import ContactInfo from "./details/ContactInfo";
 import RelatedItems from "./related/RelatedItems";
+import SellerInfo from "./seller/SellerInfo";
 
 
 export default function ListingDetailView() {
@@ -20,6 +21,7 @@ export default function ListingDetailView() {
           <ListingHeader />
           <ListingSize />
           <ListingActions />
+          <SellerInfo />
           <ListingDescription />
           <ContactInfo />
           <SafetyTips />

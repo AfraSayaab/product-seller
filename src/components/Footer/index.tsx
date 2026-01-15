@@ -7,7 +7,7 @@ const Footer: React.FC = () => (
       <div className="space-y-4">
         <h3 className="text-xl font-semibold text-pink-500">About Dazzle and Bloom.</h3>
         <p className="text-sm justify">
-          Unwanted Asian clothes taking up too much closet space? Update your wardrobe by selling your clothes and give them a new home! Buying and selling pre-loved outfits couldn't get easier with Dazzle and Bloom. Join us today and dazzle and bloom your wardrobe.
+          Unwanted Asian clothes taking up too much closet space? Update your wardrobe by selling your clothes and give them a new home! Buying and selling pre-loved outfits couldn&apos;t get easier with Dazzle and Bloom. Join us today and dazzle and bloom your wardrobe.
         </p>
       </div>
 

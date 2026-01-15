@@ -13,13 +13,19 @@ const relatedItems: RelatedItem[] = [
     id: "2",
     title: "Minimal Black Tee",
     price: "$45",
-    image: "/images/item-2.jpg",
+    image: "/hero-image1.webp",
   },
   {
     id: "3",
     title: "Vintage Oversized Shirt",
     price: "$60",
-    image: "/images/item-3.jpg",
+    image: "/hero-image4.webp",
+  },
+  {
+    id: "4",
+    title: "Blue Oversized Shirt",
+    price: "$60",
+    image: "/hero-image3.webp",
   },
 ];
 
@@ -40,8 +46,8 @@ export default function RelatedItems() {
                 src={item.image}
                 alt={item.title}
                 width={400}
-                height={500}
-                className="h-[280px] w-full object-cover transition-transform group-hover:scale-105"
+                height={400}
+                className="h-60 w-full object-cover transition-transform group-hover:scale-105"
               />
             </div>
 

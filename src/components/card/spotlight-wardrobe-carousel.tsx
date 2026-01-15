@@ -137,7 +137,7 @@ export default function SpotlightWardrobeCarousel() {
                                         key={item.id}
                                         className="pl-4 basis-[88%] sm:basis-1/2 lg:basis-1/3 xl:basis-1/4"
                                     >
-                                        <Link href="/listings/1">
+                                        <Link key={item.id} href={`/listings/${item.id}`} >
                                         <Card className="group overflow-hidden rounded-2xl border bg-background shadow-sm transition hover:shadow-md">
                                             {/* IMAGE AREA */}
                                             <div className="relative aspect-4/3 w-full overflow-hidden">

@@ -31,6 +31,7 @@ export const HeroLanding = () => {
 
   return (
     <section className="relative h-screen w-full overflow-hidden text-white">
+
       <HeroBackgroundSlider slides={HERO_SLIDES} activeIndex={activeIndex} />
 
       <Header onOpenMenu={openMenu} />
