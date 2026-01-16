@@ -48,7 +48,7 @@ export default function ImageGallery() {
       </div>
 
       {/* MAIN IMAGE */}
-      <div className="relative flex-1 overflow-hidden rounded-2xl border bg-muted">
+      <div className="relative flex-1 h-105 overflow-hidden rounded-2xl border bg-muted">
         <Image
           src={images[0]}
           alt="Listing image"

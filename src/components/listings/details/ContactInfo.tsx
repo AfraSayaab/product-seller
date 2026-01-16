@@ -3,7 +3,7 @@ import ListingTags from "./ListingTags";
 
 export default function ContactInfo() {
   return (
-    <section className="rounded-xl border bg-background p-5">
+    <section className="rounded-xl border bg-background p-5 mt-4">
       <h3 className="mb-4 text-lg font-semibold">
         Contact Information
       </h3>

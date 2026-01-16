@@ -13,17 +13,20 @@ export default function ListingDetailView() {
   return (
     <section className="mx-auto max-w-7xl px-4 py-12">
       <div className="grid grid-cols-1 gap-12 lg:grid-cols-[1.4fr_1fr]">
-        {/* IMAGE SIDE (BIGGER) */}
+       <div>  {/* IMAGE SIDE (BIGGER) */}
         <ImageGallery />
+        <ContactInfo />
+        </div>
+      
 
         {/* DETAILS SIDE */}
         <div className="space-y-8">
           <ListingHeader />
-          <ListingSize />
+   
           <ListingActions />
-          <SellerInfo />
+          <SellerInfo  sellerName="Shanice" memberSince="Jan 10, 2025" />
           <ListingDescription />
-          <ContactInfo />
+          
           <SafetyTips />
         </div>
       </div>

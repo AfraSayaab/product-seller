@@ -11,7 +11,7 @@ export default function Home() {
       <SpotlightWardrobeCarousel/>
       <FeaturedWardrobeCarousel/>
       <SearchMoreOutfit/>
-      <Footer/>
+      <Footer />
     </>
   );
 }

@@ -28,12 +28,15 @@ export const Header = ({ onOpenMenu }: Props) => {
             )}
           </button>
 
-          {/* Logo */}
-          <div className="select-none text-black text-xl sm:text-2xl font-semibold uppercase tracking-[0.1em]">
-            <span>DAZZLE</span>
-            <span className="text-pink-500">&amp;</span>
-            <span>BLOOM</span>
-          </div>
+        {/* Logo */}
+        <div className="select-none text-black text-xl sm:text-2xl font-semibold uppercase tracking-widest">
+  <Link href="/">
+    <span>DAZZLE</span>
+    <span className="text-pink-500">&amp;</span>
+    <span>BLOOM</span>
+  </Link>
+</div>
+        
         </div>
 
         {/* Center: Nav Links (Desktop Only) */}
@@ -77,7 +80,7 @@ export const Header = ({ onOpenMenu }: Props) => {
 
       {/* Mobile Dropdown Menu */}
       <div
-        className={`lg:hidden overflow-hidden transition-all duration-300 ease-in-out ${mobileMenuOpen ? "max-h-[500px]" : "max-h-0"
+        className={`lg:hidden overflow-hidden transition-all duration-300 ease-in-out ${mobileMenuOpen ? "max-h-125" : "max-h-0"
           }`}
       >
         <nav className="flex flex-col gap-4 px-6 py-6 bg-[#2a1e1a] border-t border-gray-300 rounded-b-xl">
