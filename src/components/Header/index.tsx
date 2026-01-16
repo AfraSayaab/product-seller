@@ -30,10 +30,12 @@ export const Header = ({}: Props) => {
 
         {/* Logo */}
         <div className="select-none text-black text-xl sm:text-2xl font-semibold uppercase tracking-[0.1em]">
-          <span>DAZZLE</span>
-          <span className="text-pink-500">&amp;</span>
-          <span>BLOOM</span>
-        </div>
+  <Link href="/">
+    <span>DAZZLE</span>
+    <span className="text-pink-500">&amp;</span>
+    <span>BLOOM</span>
+  </Link>
+</div>
       </div>
 
       {/* Center: Nav Links (Desktop Only) */}
