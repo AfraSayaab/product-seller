@@ -71,7 +71,7 @@ export default function RevenueChart({ data, loading }: RevenueChartProps) {
                                 padding: "8px",
                             }}
                             labelStyle={{ color: "#000", fontWeight: "bold" }}
-                            formatter={(value: number) => formatCurrency(value)}
+                            formatter={(value: any) => formatCurrency(value)}
                         />
                         <Legend />
                         <Area
