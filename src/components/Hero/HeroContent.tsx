@@ -32,7 +32,7 @@ export const HeroContent = ({ slide }: Props) => {
 
       {/* Right Side: Chat Card */}
       <div className="flex-1 flex justify-center lg:justify-end w-full">
-        <div className="bg-[#2a1e1a] rounded-2xl p-6 w-full max-w-sm flex flex-col justify-between">
+        <div className="bg-[rgba(42,30,26,0.9)] rounded-2xl p-6 w-full max-w-sm flex flex-col justify-between">
 
           {/* Card Header */}
           <div className="flex items-center gap-3 mb-6">

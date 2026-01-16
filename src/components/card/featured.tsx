@@ -17,7 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Heart } from "lucide-react";
 import Link from "next/link";
-type SpotlightItem = {
+type featuredItem = {
     id: string;
     title: string;
     category: string;
@@ -26,7 +26,7 @@ type SpotlightItem = {
     featured?: boolean;
 };
 
-const items: SpotlightItem[] = [
+const items: featuredItem[] = [
     {
         id: "1",
         title: "Suffuse Custom Made Outfit",
@@ -99,7 +99,7 @@ const items: SpotlightItem[] = [
 
 ];
 
-export default function SpotlightWardrobeCarousel() {
+export default function FeaturedWardrobeCarousel() {
     const [liked, setLiked] = React.useState<Record<string, boolean>>({});
 
     const autoplay = React.useRef(
@@ -114,7 +114,7 @@ export default function SpotlightWardrobeCarousel() {
                         Explore Our Highlights
                     </p>
                     <h2 className="mt-2 text-4xl font-extrabold tracking-tight text-pink-500 md:text-5xl">
-                        Spotlight Wardrobe
+                        Featured Wardrobe
                     </h2>
                     <p className="mt-2 text-sm text-muted-foreground">
                         Explore some of the best.
@@ -137,7 +137,7 @@ export default function SpotlightWardrobeCarousel() {
                                         key={item.id}
                                         className="pl-4 basis-[88%] sm:basis-1/2 lg:basis-1/3 xl:basis-1/4"
                                     >
-                                        <Link href="/listings/1">
+                                        <Link key={item.id} href={`/listings/${item.id}`} >
                                         <Card className="group overflow-hidden rounded-2xl border bg-background shadow-sm transition hover:shadow-md">
                                             {/* IMAGE AREA */}
                                             <div className="relative aspect-4/3 w-full overflow-hidden">
