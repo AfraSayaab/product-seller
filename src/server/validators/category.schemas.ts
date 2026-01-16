@@ -53,13 +53,13 @@ export const CategoryBaseSchema = z
 export const CategoryCreateSchema = CategoryBaseSchema;
 // NOTE: createdById comes from JWT, not client body.
 
-export const CategoryUpdateSchema = CategoryBaseSchema.partial()
-  // Explicitly forbid createdById in PATCH
-  .refine((v: any) => typeof v.createdById === "undefined", {
-    message: "createdById cannot be modified",
-    path: ["createdById"],
-  });
-
+// export const CategoryUpdateSchema = CategoryBaseSchema.partial()
+//   // Explicitly forbid createdById in PATCH
+//   .refine((v: any) => typeof v.createdById === "undefined", {
+//     message: "createdById cannot be modified",
+//     path: ["createdById"],
+//   });
+export const CategoryUpdateSchema = CategoryBaseSchema.partial();
 
 
 export const CategoryListQuerySchema = z.object({
