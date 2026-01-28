@@ -73,7 +73,7 @@ export default function ForgotPasswordPage() {
     }
 
     return (
-        <div className="min-h-screen grid place-items-center px-4 py-10 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+        <div className="min-h-screen grid place-items-center px-4 py-10 bg-linear-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
             <Card className="w-full max-w-md shadow-lg">
                 <CardHeader className="flex justify-center text-center py-6">
                     <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-900/20">
@@ -105,12 +105,12 @@ export default function ForgotPasswordPage() {
                         <div className="space-y-4 text-center">
                             <div className="rounded-lg bg-green-50 dark:bg-green-900/20 p-4">
                                 <p className="text-sm text-green-800 dark:text-green-200">
-                                    We've sent a password reset link to your email address. Please check your inbox and follow the instructions.
+                                    We&apos;ve sent a password reset link to your email address. Please check your inbox and follow the instructions.
                                 </p>
                             </div>
                             <div className="space-y-2 pt-4">
                                 <p className="text-sm text-muted-foreground">
-                                    Didn't receive the email? Check your spam folder or try again.
+                                    Didn&apos;t receive the email? Check your spam folder or try again.
                                 </p>
                                 <Button
                                     variant="outline"
@@ -191,7 +191,7 @@ export default function ForgotPasswordPage() {
                                         </Link>
                                     </p>
                                     <p className="text-sm text-muted-foreground">
-                                        Don't have an account?{' '}
+                                        Don&apos;t have an account?{' '}
                                         <Link href="/register" className="text-indigo-600 hover:underline dark:text-indigo-400 font-medium">
                                             Register
                                         </Link>
