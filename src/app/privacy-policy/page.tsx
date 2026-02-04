@@ -1,92 +1,150 @@
-import React from 'react';
-import { HeaderLayout } from '@/components/Header/header';
-import Footer from '@/components/Footer';
+import React from "react";
+import { HeaderLayout } from "@/components/Header/header";
+import Footer from "@/components/Footer";
+
+const Section: React.FC<{
+  title: string;
+  children: React.ReactNode;
+}> = ({ title, children }) => (
+  <section className="space-y-4">
+    <h2 className="text-2xl font-semibold text-black">{title}</h2>
+    <div className="text-gray-700 leading-relaxed space-y-3">
+      {children}
+    </div>
+  </section>
+);
 
 const PrivacyPolicy: React.FC = () => (
-  <div>
+  <div className="bg-white">
     <HeaderLayout />
 
-    <main className="container mx-auto px-6 py-12 space-y-12">
-      <h1 className="text-3xl font-bold text-center text-pink-500">Privacy Policy</h1>
-      <p className=" text-gray-600">Last Updated: January 18, 2023</p>
+    {/* Hero */}
+    <section className="bg-linear-to-b from-pink-50 via-white to-white py-12">
+      <div className="mx-auto max-w-4xl px-6 text-center space-y-4">
+        <span className="inline-block rounded-full border border-pink-500 px-4 py-1 text-sm font-medium text-pink-500">
+          Legal
+        </span>
 
-      <section>
-        <h2 className="text-2xl font-semibold text-pink-500">Introduction</h2>
-        <p className="text-gray-700">
-          At Dazzle and Bloom, we are committed to protecting your privacy. This Privacy Policy applies to our website, <strong>[dazzleandbloom.co.uk]</strong>, and our mobile application, and explains how we collect, use, and disclose your personal information. By using our website or mobile application, you consent to the collection, use, and disclosure of your personal information as described in this Privacy Policy.
-        </p>
-      </section>
+        <h1 className="text-4xl font-semibold text-black">
+          Privacy Policy
+        </h1>
 
-      <section>
-        <h2 className="text-2xl font-semibold text-pink-500">Information We Collect</h2>
-        <p className="text-gray-700">
-          We may collect personal information from you when you:
+        <p className="text-gray-600">
+          Last Updated: {new Date().toLocaleDateString()}
         </p>
-        <ul className="list-disc pl-6 text-gray-700 space-y-2">
-          <li>Use our website or mobile application</li>
+      </div>
+    </section>
+
+    {/* Content */}
+    <main className="mx-auto max-w-4xl px-6 pb-24 space-y-12">
+
+      <Section title="Introduction">
+        <p>
+          At Dazzle & Bloom, we are committed to protecting your privacy.
+          This Privacy Policy explains how we collect, use, disclose, and
+          safeguard your information when you visit{" "}
+          <strong>https://www.dazzleandbloom.co.uk</strong>.
+          By using our website or services, you agree to the terms outlined
+          in this policy.
+        </p>
+      </Section>
+
+      <Section title="Information We Collect">
+        <p>We may collect personal information when you:</p>
+        <ul className="list-disc pl-6 space-y-2">
+          <li>Browse or use our website</li>
           <li>Create an account</li>
           <li>Place an order</li>
-          <li>Contact customer service</li>
-          <li>Participate in a survey or contest</li>
+          <li>Contact customer support</li>
+          <li>Subscribe to our newsletter</li>
         </ul>
 
-        <p className="mt-4 text-gray-700">The types of personal information we may collect include:</p>
-        <ul className="list-disc pl-6 text-gray-700 space-y-2">
-          <li>Contact information (such as name, email address, and phone number)</li>
-          <li>Payment information (such as credit card number and billing address)</li>
-          <li>Demographic information (such as age and gender)</li>
-          <li>Information about your preferences and interests</li>
+        <p>This information may include:</p>
+        <ul className="list-disc pl-6 space-y-2">
+          <li>Name, email address, and phone number</li>
+          <li>Billing and payment information</li>
+          <li>Shipping address</li>
+          <li>Preferences and communication history</li>
+          <li>Technical data such as IP address and browser type</li>
         </ul>
-      </section>
+      </Section>
 
-      <section>
-        <h2 className="text-2xl font-semibold text-pink-500">Use of Information</h2>
-        <p className="text-gray-700">
-          We may use your personal information for the following purposes:
-        </p>
-        <ul className="list-disc pl-6 text-gray-700 space-y-2">
-          <li>To provide you with products and services</li>
-          <li>To process and fulfill your orders</li>
-          <li>To communicate with you about your account and orders</li>
-          <li>To send promotional emails and other marketing communications</li>
-          <li>To improve our website and mobile application</li>
-          <li>To conduct surveys and research</li>
+      <Section title="How We Use Your Information">
+        <ul className="list-disc pl-6 space-y-2">
+          <li>Provide and maintain our services</li>
+          <li>Process transactions and fulfill orders</li>
+          <li>Communicate regarding accounts and purchases</li>
+          <li>Send marketing communications (with consent)</li>
+          <li>Improve platform functionality and security</li>
         </ul>
-      </section>
+      </Section>
 
-      <section>
-        <h2 className="text-2xl font-semibold text-pink-500">Disclosure of Information</h2>
-        <p className="text-gray-700">
-          We may disclose your personal information to third parties for the following purposes:
-        </p>
-        <ul className="list-disc pl-6 text-gray-700 space-y-2">
-          <li>To fulfill your orders and provide you with products and services</li>
-          <li>To process payments</li>
-          <li>To conduct surveys and research</li>
-          <li>To comply with legal requirements, such as a subpoena or court order</li>
+      <Section title="Disclosure of Information">
+        <p>We may share your information with:</p>
+        <ul className="list-disc pl-6 space-y-2">
+          <li>Trusted service providers and partners</li>
+          <li>Payment processors and logistics providers</li>
+          <li>Legal or regulatory authorities when required by law</li>
         </ul>
-      </section>
+      </Section>
 
-      <section>
-        <h2 className="text-2xl font-semibold text-pink-500">Security</h2>
-        <p className="text-gray-700">
-          We take reasonable steps to protect your personal information from unauthorized access, use, or disclosure. However, no security measures are completely foolproof, and we cannot guarantee the security of your personal information.
+      <Section title="Cookies and Tracking Technologies">
+        <p>
+          We use cookies and similar technologies to enhance your browsing
+          experience, analyze website traffic, and personalize content.
+          You can control cookies through your browser settings.
         </p>
-      </section>
+      </Section>
 
-      <section>
-        <h2 className="text-2xl font-semibold text-pink-500">Changes to This Privacy Policy</h2>
-        <p className="text-gray-700">
-          We may update this Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on our website and mobile application. You are advised to review this Privacy Policy periodically for any changes.
+      <Section title="Data Security">
+        <p>
+          We implement reasonable technical and organizational measures to
+          protect your personal data. However, no method of transmission
+          over the internet is completely secure, and we cannot guarantee
+          absolute security.
         </p>
-      </section>
+      </Section>
 
-      <section>
-        <h2 className="text-2xl font-semibold text-pink-500">Contact Us</h2>
-        <p className="text-gray-700">
-          If you have any questions or concerns about this Privacy Policy, please contact us at <a href="mailto:hello@dazzleandbloom.co.uk" className="text-pink-500">hello@dazzleandbloom.co.uk</a>.
+      <Section title="Your Rights">
+        <p>You may have the right to:</p>
+        <ul className="list-disc pl-6 space-y-2">
+          <li>Access your personal data</li>
+          <li>Request correction or deletion</li>
+          <li>Object to or restrict processing</li>
+          <li>Withdraw consent at any time</li>
+          <li>Request data portability</li>
+        </ul>
+      </Section>
+
+      <Section title="Children’s Privacy">
+        <p>
+          Our services are not intended for children under the age of 13.
+          We do not knowingly collect personal information from children.
         </p>
-      </section>
+      </Section>
+
+      <Section title="Changes to This Policy">
+        <p>
+          We may update this Privacy Policy from time to time. Updates will
+          be posted on this page, and continued use of our services
+          constitutes acceptance of those changes.
+        </p>
+      </Section>
+
+      <Section title="Contact Us">
+        <p>
+          If you have any questions regarding this Privacy Policy, please
+          contact us at{" "}
+          <a
+            href="mailto:hello@dazzleandbloom.co.uk"
+            className="font-medium text-pink-500 underline"
+          >
+            hello@dazzleandbloom.co.uk
+          </a>
+          .
+        </p>
+      </Section>
+
     </main>
 
     <Footer />

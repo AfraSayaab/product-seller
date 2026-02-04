@@ -30,42 +30,56 @@ export default function Footer() {
             </p>
           </div>
 
-          {/* COLUMN 2 — INFO */}
           <div className="space-y-4 px-6 border-r border-pink-500/30">
-            <h4 className="mb-4 text-sm font-semibold uppercase tracking-wider text-pink-500">
-              Info
-            </h4>
-            <ul className="space-y-3 text-sm">
-              {["Contact", "About Us", "Privacy Policy", "Blog", "FAQ"].map(
-                (item) => (
-                  <li key={item}>
-                    <a href="#" className="transition hover:text-pink-500">
-                      {item}
-                    </a>
-                  </li>
-                )
-              )}
-            </ul>
-          </div>
+  <h4 className="mb-4 text-sm font-semibold uppercase tracking-wider text-pink-500">
+    Info
+  </h4>
 
-          {/* COLUMN 3 — LINKS */}
-          <div className="space-y-4 px-6 border-r border-pink-500/30">
-            <h4 className="mb-4 text-sm font-semibold uppercase tracking-wider text-pink-500">
-              Links
-            </h4>
-            <ul className="space-y-3 text-sm">
-              {["My Dashboard", "Submit Listing", "Login", "Register"].map(
-                (item) => (
-                  <li key={item}>
-                    <a href="#" className="transition hover:text-pink-500">
-                      {item}
-                    </a>
-                  </li>
-                )
-              )}
-            </ul>
-          </div>
+  <ul className="space-y-3 text-sm">
+    {[
+      { label: "Contact", href: "/contact" },
+      { label: "About Us", href: "/about" },
+      { label: "Privacy Policy", href: "/privacy-policy" },
+      { label: "Blog", href: "/blog" },
+      { label: "FAQ", href: "/faq" },
+    ].map((item) => (
+      <li key={item.label}>
+        <a
+          href={item.href}
+          className="transition hover:text-pink-500"
+        >
+          {item.label}
+        </a>
+      </li>
+    ))}
+  </ul>
+</div>
+<div className="space-y-4 px-6 border-r border-pink-500/30">
+  <h4 className="mb-4 text-sm font-semibold uppercase tracking-wider text-pink-500">
+    Links
+  </h4>
 
+  <ul className="space-y-3 text-sm">
+    {[
+      { label: "My Dashboard", href: "/dashboard" },
+      { label: "Submit Listing", href: "/submit-listing" },
+      { label: "Login", href: "/login" },
+      { label: "Register", href: "/register" },
+    ].map((item) => (
+      <li key={item.label}>
+        <a
+          href={item.href}
+          className="transition hover:text-pink-500"
+        >
+          {item.label}
+        </a>
+      </li>
+    ))}
+  </ul>
+</div>
+
+
+         
           {/* COLUMN 4 — CATEGORIES + SOCIAL */}
           <div className="space-y-6 pl-6">
             <div>
