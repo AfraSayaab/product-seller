@@ -38,6 +38,8 @@ type ListingFormData = {
   status: string;
   isPhoneVisible: boolean;
   images: UploadItem[];
+  isFeatured?: boolean;
+  isSpotlight?: boolean;
 };
 
 type ListingFormProps = {
@@ -381,18 +383,53 @@ export default function ListingForm({
 
           {/* Phone Visibility */}
           <div className="space-y-2">
-            <Label>Phone Visibility</Label>
-            <div className="flex items-center space-x-2 pt-2">
-              <Switch
-                checked={formData.isPhoneVisible}
-                onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, isPhoneVisible: checked }))}
-                disabled={isSubmitting}
-              />
-              <span className="text-sm text-muted-foreground">
-                Show phone number in listing
-              </span>
+            <Label>Visibility Settings</Label>
+
+            <div className="flex items-center gap-6 pt-2">
+              {/* Phone Visibility */}
+              <div className="flex items-center space-x-2">
+                <Switch
+                  checked={formData.isPhoneVisible}
+                  onCheckedChange={(checked) =>
+                    setFormData((prev) => ({ ...prev, isPhoneVisible: checked }))
+                  }
+                  disabled={isSubmitting}
+                />
+                <span className="text-sm text-muted-foreground">
+                  Show phone
+                </span>
+              </div>
+
+              {/* Featured */}
+              <div className="flex items-center space-x-2">
+                <Switch
+                  checked={formData.isFeatured}
+                  onCheckedChange={(checked) =>
+                    setFormData((prev) => ({ ...prev, isFeatured: checked }))
+                  }
+                  disabled={isSubmitting}
+                />
+                <span className="text-sm text-muted-foreground">
+                  Featured
+                </span>
+              </div>
+
+              {/* Spotlight */}
+              <div className="flex items-center space-x-2">
+                <Switch
+                  checked={formData.isSpotlight}
+                  onCheckedChange={(checked) =>
+                    setFormData((prev) => ({ ...prev, isSpotlight: checked }))
+                  }
+                  disabled={isSubmitting}
+                />
+                <span className="text-sm text-muted-foreground">
+                  Spotlight
+                </span>
+              </div>
             </div>
           </div>
+
 
           {/* Images */}
           <div className="space-y-2">

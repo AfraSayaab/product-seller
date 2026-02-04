@@ -116,8 +116,8 @@ export const SideDrawer = ({ isOpen, onClose }: Props) => {
                 )}
               </div>
             ))}
-            {otherLinks.map((link) => (
-              <div >
+            {otherLinks.map((link,index:number) => (
+              <div key={index}>
 
                 <div className="flex items-center">
                   <div
