@@ -108,6 +108,8 @@ export const ListingCreateSchema = z.object({
   attributes: z.record(z.string(), z.any()).optional().nullable(),
   status: ListingStatusEnum.default("DRAFT"),
   isPhoneVisible: z.boolean().default(true),
+  isFeatured: z.boolean().default(false),
+  isSpotlight: z.boolean().default(false),
   images: z.array(z.object({
     url: z.string().url(),
     sortOrder: z.number().int().nonnegative().default(0),
