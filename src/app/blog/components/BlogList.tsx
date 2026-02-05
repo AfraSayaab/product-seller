@@ -22,7 +22,7 @@ const BLOGS: BlogPost[] = Array.from({ length: 22 }).map((_, i) => ({
   slug: `blog-post-${i + 1}`,
   title: `Blog Post Title ${i + 1}`,
   excerpt:
-    "This is a short description of the blog post to give readers a preview of the content and entice them to click continue reading.",
+    "This is a short description of the ${i + 1} blog post to give readers a preview of the content and entice them to click continue reading.",
   image: "/blog-placeholder.webp",
   date: "2026-01-12",
   month: "January 2026",
