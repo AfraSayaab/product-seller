@@ -22,7 +22,7 @@ export default function UserDashboardHero({
   refreshDisabled,
 }: Props) {
   return (
-    <Card className="overflow-hidden border-none bg-gradient-to-r from-primary to-indigo-600 text-white shadow-lg">
+    <Card className="overflow-hidden border-none bg-linear-to-r from-primary to-indigo-600 text-white shadow-lg">
       <CardContent className="p-6">
         <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div className="space-y-2">

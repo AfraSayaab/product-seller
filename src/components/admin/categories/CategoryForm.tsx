@@ -219,7 +219,7 @@ export default function CategoryForm({
               <div className="w-14 h-7 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-black peer-focus:ring-offset-2 rounded-full transition-colors peer-checked:bg-black peer-disabled:opacity-50 peer-disabled:cursor-not-allowed"></div>
               <div className="absolute left-1 top-1 w-5 h-5 bg-white rounded-full transition-transform peer-checked:translate-x-7 shadow-md"></div>
             </div>
-            <span className="text-sm font-bold text-black min-w-[60px]">
+            <span className="text-sm font-bold text-black min-w-15">
               {formData.isActive ? "Active" : "Inactive"}
             </span>
           </label>
