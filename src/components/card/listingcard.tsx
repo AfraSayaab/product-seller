@@ -17,7 +17,7 @@ function money(price: string, currency: string) {
 export function ListingCard({ item, cardtype }: { item: PublicListingDTO; cardtype?: string }) {
   const [liked, setLiked] = React.useState(false);
 
-  const href = `/listings/${item.slug || item.id}`;
+  const href = `/listings/${item.id}`;
 
   return (
     <Link href={href} className="block">
