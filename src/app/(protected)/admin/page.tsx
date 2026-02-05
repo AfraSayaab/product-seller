@@ -8,6 +8,7 @@ export default function AdminDashboardPage() {
         <div className="space-y-6">
             <StatsGrid />
             <DashboardCharts />
+           
         </div>
     );
 }

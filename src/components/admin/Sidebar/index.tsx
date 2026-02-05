@@ -15,7 +15,10 @@ import {
     ChevronDown,
     ChevronRight,
     Key,
-    User
+    User,
+    FileText,
+    PlusSquare,
+    List
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -37,6 +40,24 @@ const NAV_ITEMS: NavItem[] = [
     { label: "Users", href: "/admin/users", icon: Users },
     { label: "Products", href: "/admin/listings", icon: Package },
     { label: "Categories", href: "/admin/categories", icon: Tags },
+    {
+    label: "Blogs",
+    href: "/admin/blog",
+    icon: FileText,
+    children: [
+        {
+            label: "Create Blog",
+            href: "/admin/blog/create",
+            icon: PlusSquare,
+        },
+        {
+            label: "Manage Blogs",
+            href: "/admin/blog/manage",
+            icon: List,
+        },
+    ],
+},
+
     { label: "Plans", href: "/admin/plans", icon: CreditCard },
     {
         label: "Settings",
@@ -114,15 +135,15 @@ export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; o
                     level > 0 && "ml-4"
                 )}
             >
-                <Icon className={cn("h-4 w-4 flex-shrink-0", active ? "text-background" : "text-foreground/80 group-hover:text-foreground")} />
+                <Icon className={cn("h-4 w-4 shrink-0", active ? "text-background" : "text-foreground/80 group-hover:text-foreground")} />
                 {!collapsed && (
                     <>
                         <span className={cn("flex-1 text-left", active ? "text-background" : "text-foreground/90")}>{item.label}</span>
                         {hasChildren && (
                             isExpanded ? (
-                                <ChevronDown className="h-4 w-4 flex-shrink-0" />
+                                <ChevronDown className="h-4 w-4 shrink-0" />
                             ) : (
-                                <ChevronRight className="h-4 w-4 flex-shrink-0" />
+                                <ChevronRight className="h-4 w-4 shrink-0" />
                             )
                         )}
                     </>

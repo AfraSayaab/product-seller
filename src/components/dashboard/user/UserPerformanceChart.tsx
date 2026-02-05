@@ -23,7 +23,7 @@ export default function UserPerformanceChart({ data = [], loading, error }: Prop
   const hasData = data.some((entry) => entry.listings || entry.views || entry.favorites);
 
   return (
-    <Card className="min-h-[320px]">
+    <Card className="min-h-80">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <div>
           <CardTitle>Performance trend</CardTitle>
@@ -31,7 +31,7 @@ export default function UserPerformanceChart({ data = [], loading, error }: Prop
         </div>
         <TrendingUp className="h-5 w-5 text-primary" />
       </CardHeader>
-      <CardContent className="h-[260px]">
+      <CardContent className="h-65">
         {loading ? (
           <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
             Loading chart...

@@ -148,6 +148,7 @@ function QuickActionsCard({
           Manage my listings
         </Button>
       </CardContent>
+      
     </Card>
   );
 }
