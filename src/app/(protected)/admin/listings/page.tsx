@@ -188,7 +188,7 @@ export default function AdminListingsPage() {
       </div>
 
       <Dialog open={openAdd} onOpenChange={setOpenAdd}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Create New Listing</DialogTitle>
           </DialogHeader>

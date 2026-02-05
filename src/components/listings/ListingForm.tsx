@@ -178,6 +178,8 @@ export default function ListingForm({
         condition: formData.condition,
         negotiable: formData.negotiable,
         isPhoneVisible: formData.isPhoneVisible,
+        isFeatured: formData.isFeatured ?? false,
+        isSpotlight: formData.isSpotlight ?? false,
         images: formData.images.map((img, index) => ({
           url: img.url,
           sortOrder: index,

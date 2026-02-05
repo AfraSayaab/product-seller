@@ -78,11 +78,9 @@ export const ListingService = {
     };
 
     // Default to ACTIVE status for public listings if not specified
-    if (!status) {
-      where.status = "ACTIVE";
-    } else {
+    if (status) {
       where.status = status;
-    }
+    } 
 
     // Search query - Enhanced search in title, description, and attributes
     if (q && q.length > 0) {
@@ -336,6 +334,8 @@ export const ListingService = {
     attributes?: any;
     status?: string;
     isPhoneVisible?: boolean;
+    isFeatured?: boolean;
+    isSpotlight?: boolean;
     images?: Array<{
       url: string;
       sortOrder?: number;
@@ -488,6 +488,8 @@ export const ListingService = {
           attributes: data.attributes || null,
           status: (data.status as any) || "DRAFT",
           isPhoneVisible: data.isPhoneVisible ?? true,
+          isFeatured: data.isFeatured ?? false,
+          isSpotlight: data.isSpotlight ?? false,
           images: {
             create: imagesData,
           },
