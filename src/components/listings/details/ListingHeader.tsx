@@ -11,7 +11,7 @@ export default function ListingHeader({ listing }: { listing: any }) {
             {listing.title}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Listed on {listing.publishedAt ? new Date(listing.publishedAt).toLocaleDateString() : "—"}
+            Listed on {listing.createdAt ? new Date(listing.createdAt).toLocaleDateString() : "—"}
           </p>
         </div>
 
