@@ -1,5 +1,5 @@
 "use client";
-
+//src\components\admin\blog\postform.tsx
 import * as React from "react";
 import { Editor } from "@tinymce/tinymce-react";
 import Image from "next/image";
@@ -12,7 +12,7 @@ export interface BlogFormData {
   keywords: string;
   schemaMarkup: string;
   content: string;
-  image: string | null;
+  image: File | string | null;   // 🔥 FIX
   imageAlt: string;
   isPublished: boolean;
 }
@@ -41,12 +41,16 @@ export default function PostForm({
   onSubmit,
 }: PostFormProps) {
   /* ---------------- Image Upload (Preview Only) ---------------- */
-  const handleImageChange = (file: File | null) => {
-    if (!file) return;
-    const url = URL.createObjectURL(file);
-    setImagePreview(url);
-    setFormData((prev) => ({ ...prev, image: url }));
-  };
+ const handleImageChange = (file: File | null) => {
+  if (!file) return;
+
+  setImagePreview(URL.createObjectURL(file)); // preview only
+  setFormData((prev) => ({
+    ...prev,
+    image: file, // ✅ store FILE, not URL
+  }));
+};
+
 
   return (
     <form onSubmit={onSubmit} className="space-y-8 p-6">

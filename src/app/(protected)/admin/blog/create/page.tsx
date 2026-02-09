@@ -1,24 +1,23 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import * as React from "react";
 import { toast } from "sonner";
-import { api } from "@/lib/api";
 import PostForm, { BlogFormData } from "@/components/admin/blog/postform";
 
 interface BlogFormProps {
   initialData?: Partial<BlogFormData>;
   blogId?: number;
-  onSuccess: () => void;
-  onCancel: () => void;
+  onSuccess?: () => void;
+  onCancel?: () => void;
 }
 
 export default function BlogForm({ initialData, blogId, onSuccess, onCancel }: BlogFormProps) {
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [autoSlug, setAutoSlug] = React.useState(true);
-  const [imagePreview, setImagePreview] = React.useState<string | null>(
-    initialData?.image ?? null
-  );
 
+  // form state
   const initialState: BlogFormData = {
     title: initialData?.title || "",
     slug: initialData?.slug || "",
@@ -27,14 +26,19 @@ export default function BlogForm({ initialData, blogId, onSuccess, onCancel }: B
     keywords: initialData?.keywords || "",
     schemaMarkup: initialData?.schemaMarkup || "",
     content: initialData?.content || "",
-    image: initialData?.image ?? null,
+    image: initialData?.image ?? null, // string URL for existing image
     imageAlt: initialData?.imageAlt || "",
     isPublished: initialData?.isPublished ?? true,
   };
 
   const [formData, setFormData] = React.useState<BlogFormData>(initialState);
 
-  // Auto-generate slug
+  // separate state for preview URL (string)
+  const [imagePreview, setImagePreview] = React.useState<string | null>(
+    typeof initialState.image === "string" ? initialState.image : null
+  );
+
+  // Auto-generate slug from title
   React.useEffect(() => {
     if (autoSlug && formData.title) {
       const slug = formData.title
@@ -45,40 +49,77 @@ export default function BlogForm({ initialData, blogId, onSuccess, onCancel }: B
     }
   }, [formData.title, autoSlug]);
 
+  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
-      const payload = { ...formData, title: formData.title.trim(), slug: formData.slug.trim() };
+      const fd = new FormData();
+      fd.append("title", formData.title.trim());
+      fd.append("slug", formData.slug.trim());
+      fd.append("metaTitle", formData.metaTitle.trim());
+      fd.append("metaDescription", formData.metaDescription.trim());
+      fd.append("keywords", formData.keywords.trim());
+      fd.append("schemaMarkup", formData.schemaMarkup.trim());
+      fd.append("content", formData.content.trim());
+      fd.append("imageAlt", formData.imageAlt);
+      fd.append("isPublished", String(formData.isPublished));
 
-      if (blogId) {
-        await api(`/api/admin/blogs/${blogId}`, { method: "PATCH", body: JSON.stringify(payload) });
-        toast.success("Blog updated successfully");
-      } else {
-        await api("/api/admin/blogs", { method: "POST", body: JSON.stringify(payload) });
-        toast.success("Blog created successfully");
+      // append image if it's a File (new upload)
+      if (formData.image instanceof File) {
+        fd.append("image", formData.image);
       }
 
-      onSuccess();
-    } catch (error: unknown) {
-      toast.error(error instanceof Error ? error.message : "Something went wrong");
+      const res = await fetch(
+        blogId ? `/api/admin/blogs/${blogId}` : "/api/admin/blogs",
+        {
+          method: blogId ? "PATCH" : "POST",
+          body: fd, // send as FormData
+        }
+      );
+
+      if (!res.ok) throw new Error(blogId ? "Failed to update blog" : "Failed to create blog");
+
+      toast.success(blogId ? "Blog updated successfully 🎉" : "Blog posted successfully 🎉");
+
+      if (!blogId) {
+        // reset form only when creating new blog
+        setFormData(initialState);
+        setImagePreview(null);
+        setAutoSlug(true);
+      }
+
+      onSuccess?.();
+      router.push("/admin/blog/manage");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  // Cancel / reset form
   const handleCancel = () => {
     setFormData(initialState);
-    setImagePreview(initialState.image);
+
+    // If image is a File (unlikely on cancel), create URL; else use string or null
+    if (initialState.image instanceof File) {
+      setImagePreview(URL.createObjectURL(initialState.image));
+    } else {
+      setImagePreview(initialState.image ?? null);
+    }
+
     setAutoSlug(true);
-    onCancel();
+    onCancel?.();
   };
 
   return (
     <div className="p-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-black">{blogId ? "Edit Blog Post" : "Add New Blog Post"}</h1>
+        <h1 className="text-2xl font-bold text-black">
+          {blogId ? "Edit Blog Post" : "Add New Blog Post"}
+        </h1>
         <p className="text-sm text-gray-600">Create and publish a blog article</p>
       </div>
 
