@@ -28,15 +28,15 @@ export const Header = ({ onOpenMenu }: Props) => {
             )}
           </button>
 
-        {/* Logo */}
-        <div className="select-none text-black text-xl sm:text-2xl font-semibold uppercase tracking-widest">
-  <Link href="/">
-    <span>DAZZLE</span>
-    <span className="text-pink-500">&amp;</span>
-    <span>BLOOM</span>
-  </Link>
-</div>
-        
+          {/* Logo */}
+          <div className="select-none text-black text-xl sm:text-2xl font-semibold uppercase tracking-widest">
+            <Link href="/">
+              <span>DAZZLE</span>
+              <span className="text-pink-500">&amp;</span>
+              <span>BLOOM</span>
+            </Link>
+          </div>
+
         </div>
 
         {/* Center: Nav Links (Desktop Only) */}

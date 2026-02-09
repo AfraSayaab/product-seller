@@ -1,40 +1,55 @@
 import MetaRow from "./MetaRow";
 import ListingTags from "./ListingTags";
 
-export default function ContactInfo() {
+type ContactInfoProps = {
+  listing: any;
+};
+
+function buildAddress(location: any) {
+  if (!location) return "";
+  const parts = [location.area, location.city, location.state, location.country].filter(Boolean);
+  return parts.join(", ");
+}
+
+function buildCategory(category: any) {
+  if (!category) return "";
+  // Example: "Women / Dresses"
+  const parts = [category.parent?.name, category.name].filter(Boolean);
+  return parts.join(" / ");
+}
+
+export default function ContactInfo({ listing }: ContactInfoProps) {
+  const phone =
+    listing?.isPhoneVisible ? listing?.user?.phone : "Hidden by seller";
+  const email = listing?.user?.email || "";
+  const category = buildCategory(listing?.category);
+  const address = buildAddress(listing?.location);
+
+  // pick tags from a few possible places
+  const tags: string[] =
+    listing?.attributes?.tags ||
+    listing?.tags ||
+    [];
+
   return (
     <section className="rounded-xl border bg-background p-5 mt-4">
-      <h3 className="mb-4 text-lg font-semibold">
-        Contact Information
-      </h3>
+      <h3 className="mb-4 text-lg font-semibold">Contact Information</h3>
 
       <div className="space-y-3">
-        <MetaRow label="Phone" value="07525052533" />
-        <MetaRow label="Email" value="sarahakbar@hotmail.co.uk" />
-        <MetaRow label="Category" value="Women" />
-        <MetaRow label="Address" value="12, Greater Manchester" />
+        <MetaRow label="Phone" value={phone || "—"} />
+        <MetaRow label="Email" value={email || "—"} />
+        <MetaRow label="Category" value={category || "—"} />
+        <MetaRow label="Address" value={address || "—"} />
 
-        <div className="pt-3">
-          <span className="mb-2 block text-sm font-medium text-muted-foreground">
-            Listing Tags:
-          </span>
+        {tags?.length > 0 && (
+          <div className="pt-3">
+            <span className="mb-2 block text-sm font-medium text-muted-foreground">
+              Listing Tags:
+            </span>
 
-          <ListingTags
-            tags={[
-              "pakistani",
-              "red-bridal-dress",
-              "red-dupatta",
-              "red-and-gold",
-              "suffuse",
-              "suffusebysanayasir",
-              "dupatta",
-              "asianbridal",
-              "heavy-embroidery-gown",
-              "bridaldress",
-              "can-can",
-            ]}
-          />
-        </div>
+            <ListingTags tags={tags} />
+          </div>
+        )}
       </div>
     </section>
   );
