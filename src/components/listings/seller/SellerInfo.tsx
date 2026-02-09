@@ -20,7 +20,7 @@ export default function SellerInfo({ user }: { user: any }) {
         </div>
 
         <Link
-          href={`/user/${user?.id}`}
+          href={`/author/${user?.id}`}
           className="text-sm font-medium text-pink-500 hover:underline"
         >
           View all ads
