@@ -1,6 +1,5 @@
 import ImageGallery from "./media/ImageGallery";
 import ListingHeader from "./details/ListingHeader";
-import ListingSize from "./details/ListingSize";
 import ListingActions from "./details/ListingActions";
 import SafetyTips from "./details/SafetyTips";
 import ListingDescription from "./details/ListingDescription";
@@ -8,29 +7,28 @@ import ContactInfo from "./details/ContactInfo";
 import RelatedItems from "./related/RelatedItems";
 import SellerInfo from "./seller/SellerInfo";
 
-
-export default function ListingDetailView() {
+export default function ListingDetailView({ listing }: { listing: any }) {
   return (
     <section className="mx-auto max-w-7xl px-4 py-12">
       <div className="grid grid-cols-1 gap-12 lg:grid-cols-[1.4fr_1fr]">
-       <div>  {/* IMAGE SIDE (BIGGER) */}
-        <ImageGallery />
-        <ContactInfo />
+        <div>
+          <ImageGallery images={listing.images} title={listing.title} />
+          <ContactInfo listing={listing} />
         </div>
-      
 
-        {/* DETAILS SIDE */}
         <div className="space-y-8">
-          <ListingHeader />
-   
-          <ListingActions />
-          <SellerInfo  sellerName="Shanice" memberSince="Jan 10, 2025" />
-          <ListingDescription />
-          
+          <ListingHeader listing={listing} />
+          <ListingActions listing={listing} />
+          <SellerInfo user={listing.user} />
+          <ListingDescription description={listing.description} />
           <SafetyTips />
         </div>
       </div>
-      <RelatedItems />
+
+      <RelatedItems
+        excludeId={listing.id}
+        categorySlug={listing?.category?.slug}   // ✅ correct
+      />
     </section>
   );
 }

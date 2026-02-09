@@ -80,7 +80,7 @@ export const ListingService = {
     // Default to ACTIVE status for public listings if not specified
     if (status) {
       where.status = status;
-    } 
+    }
 
     // Search query - Enhanced search in title, description, and attributes
     if (q && q.length > 0) {
@@ -258,7 +258,7 @@ export const ListingService = {
   },
 
   async getById(id: number) {
-    return prisma.listing.findUnique({
+    return prisma.listing.findFirst({
       where: { id, deletedAt: null },
       include: {
         user: {
@@ -271,6 +271,7 @@ export const ListingService = {
             phone: true,
             website: true,
             whatsapp: true,
+            createdAt: true,
           },
         },
         category: {
@@ -279,13 +280,7 @@ export const ListingService = {
             name: true,
             slug: true,
             parentId: true,
-            parent: {
-              select: {
-                id: true,
-                name: true,
-                slug: true,
-              },
-            },
+            parent: { select: { id: true, name: true, slug: true } },
           },
         },
         location: {
@@ -299,20 +294,12 @@ export const ListingService = {
             lng: true,
           },
         },
-        images: {
-          orderBy: { sortOrder: "asc" },
-        },
-        _count: {
-          select: {
-            favorites: true,
-            threads: true,
-            reports: true,
-          },
-        },
+        images: { orderBy: { sortOrder: "asc" } },
+        boosts: true,
+        _count: { select: { favorites: true, threads: true, reports: true } },
       },
     });
   },
-
   async create(data: {
     userId: number;
     categoryId: number;
@@ -567,9 +554,9 @@ export const ListingService = {
   }, userId: number, userRole: "USER" | "ADMIN") {
     const existing = await prisma.listing.findUnique({
       where: { id },
-      select: { 
-        title: true, 
-        slug: true, 
+      select: {
+        title: true,
+        slug: true,
         locationId: true,
         userId: true,
         status: true,
