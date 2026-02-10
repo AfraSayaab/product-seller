@@ -3,10 +3,10 @@
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { toast } from "sonner";
-import PostForm, { BlogFormData } from "@/components/admin/blog/postform";
+import PostForm, { BlogFormData, Category } from "@/components/admin/blog/postform";
 
 interface BlogFormProps {
-  initialData?: Partial<BlogFormData>;
+  initialData?: Partial<BlogFormData & { categoryId?: number }>;
   blogId?: number;
   onSuccess?: () => void;
   onCancel?: () => void;
@@ -16,9 +16,9 @@ export default function BlogForm({ initialData, blogId, onSuccess, onCancel }: B
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [autoSlug, setAutoSlug] = React.useState(true);
+  const [categories, setCategories] = React.useState<Category[] | null>(null);
 
-  // form state
-  const initialState: BlogFormData = {
+  const initialState: BlogFormData & { categoryId?: number } = {
     title: initialData?.title || "",
     slug: initialData?.slug || "",
     metaTitle: initialData?.metaTitle || "",
@@ -26,19 +26,18 @@ export default function BlogForm({ initialData, blogId, onSuccess, onCancel }: B
     keywords: initialData?.keywords || "",
     schemaMarkup: initialData?.schemaMarkup || "",
     content: initialData?.content || "",
-    image: initialData?.image ?? null, // string URL for existing image
+    image: initialData?.image ?? null,
     imageAlt: initialData?.imageAlt || "",
     isPublished: initialData?.isPublished ?? true,
+    categoryId: initialData?.categoryId ?? undefined,
   };
 
-  const [formData, setFormData] = React.useState<BlogFormData>(initialState);
-
-  // separate state for preview URL (string)
+  const [formData, setFormData] = React.useState(initialState);
   const [imagePreview, setImagePreview] = React.useState<string | null>(
     typeof initialState.image === "string" ? initialState.image : null
   );
 
-  // Auto-generate slug from title
+  // Auto-generate slug
   React.useEffect(() => {
     if (autoSlug && formData.title) {
       const slug = formData.title
@@ -49,9 +48,33 @@ export default function BlogForm({ initialData, blogId, onSuccess, onCancel }: B
     }
   }, [formData.title, autoSlug]);
 
-  // Handle form submission
+  // Fetch categories
+  React.useEffect(() => {
+    async function fetchCategories() {
+      try {
+        const res = await fetch("/api/admin/categories");
+        if (!res.ok) throw new Error("Failed to fetch categories");
+        const json = await res.json();
+        console.log("Categories API response:", json);
+        const data: Category[] = Array.isArray(json.data?.items) ? json.data.items : [];
+        setCategories(data);
+      } catch (err) {
+        console.error(err);
+        toast.error(err instanceof Error ? err.message : "Failed to load categories");
+      }
+    }
+    fetchCategories();
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate required fields
+    if (!formData.title.trim() || !formData.slug.trim()) {
+      toast.error("Title and slug are required");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -66,25 +89,29 @@ export default function BlogForm({ initialData, blogId, onSuccess, onCancel }: B
       fd.append("imageAlt", formData.imageAlt);
       fd.append("isPublished", String(formData.isPublished));
 
-      // append image if it's a File (new upload)
-      if (formData.image instanceof File) {
-        fd.append("image", formData.image);
+      // Always append categoryId, null if not set
+     if (formData.categoryId != null) {
+  fd.append("categoryId", String(formData.categoryId));
+}
+
+
+      if (formData.image instanceof File) fd.append("image", formData.image);
+
+      const res = await fetch(blogId ? `/api/admin/blogs/${blogId}` : "/api/admin/blogs", {
+        method: blogId ? "PATCH" : "POST",
+        body: fd,
+      });
+
+      if (!res.ok) {
+        // Read the response text for better error message
+        const text = await res.text();
+        console.error("Blog creation failed:", text);
+        throw new Error(text || (blogId ? "Failed to update blog" : "Failed to create blog"));
       }
-
-      const res = await fetch(
-        blogId ? `/api/admin/blogs/${blogId}` : "/api/admin/blogs",
-        {
-          method: blogId ? "PATCH" : "POST",
-          body: fd, // send as FormData
-        }
-      );
-
-      if (!res.ok) throw new Error(blogId ? "Failed to update blog" : "Failed to create blog");
 
       toast.success(blogId ? "Blog updated successfully 🎉" : "Blog posted successfully 🎉");
 
       if (!blogId) {
-        // reset form only when creating new blog
         setFormData(initialState);
         setImagePreview(null);
         setAutoSlug(true);
@@ -99,20 +126,15 @@ export default function BlogForm({ initialData, blogId, onSuccess, onCancel }: B
     }
   };
 
-  // Cancel / reset form
   const handleCancel = () => {
     setFormData(initialState);
-
-    // If image is a File (unlikely on cancel), create URL; else use string or null
-    if (initialState.image instanceof File) {
-      setImagePreview(URL.createObjectURL(initialState.image));
-    } else {
-      setImagePreview(initialState.image ?? null);
-    }
-
+    setImagePreview(typeof initialState.image === "string" ? initialState.image : null);
     setAutoSlug(true);
     onCancel?.();
   };
+
+  // Only render PostForm after categories are loaded
+  if (!categories) return <div className="p-6">Loading ...</div>;
 
   return (
     <div className="p-6">
@@ -134,6 +156,7 @@ export default function BlogForm({ initialData, blogId, onSuccess, onCancel }: B
           isSubmitting={isSubmitting}
           onCancel={handleCancel}
           onSubmit={handleSubmit}
+          categories={categories} // guaranteed array
         />
       </div>
     </div>

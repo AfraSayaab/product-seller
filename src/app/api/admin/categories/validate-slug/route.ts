@@ -1,3 +1,4 @@
+//src\app\api\admin\categories\validate-slug\route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { ok, fail } from "@/lib/responses";
 import { CategoryService } from "@/server/services/category.service";

@@ -159,13 +159,13 @@ export default function ManagePostsPage() {
                   <TableCell className="border-b border-gray-200 px-3 py-2 flex gap-2">
                     <Button
                       onClick={() => handleDelete(blog)}
-                      className="bg-red-500 hover:bg-red-600 text-white"
+                      className="bg-black  text-white"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
 
                     <Link href={`/admin/blog/edit/${blog.id}`}>
-                      <Button className="bg-blue-500 hover:bg-blue-600 text-white">
+                      <Button className="bg-black text-white">
                         <Pencil className="h-4 w-4" />
                       </Button>
                     </Link>

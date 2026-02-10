@@ -31,17 +31,22 @@ export default function BlogList({ currentPage }: { currentPage: number }) {
   const [tag, setTag] = useState<string | null>(null);
 
   /* -------------------- FETCH BLOGS -------------------- */
-  useEffect(() => {
-    fetch(`/api/blogs?page=${currentPage}&limit=${POSTS_PER_PAGE}`)
-      .then((res) => res.json())
-      .then((data) => {
-        setBlogs(data.data);
-        setTotalPages(data.totalPages);
-      });
-  }, [currentPage]);
+ useEffect(() => {
+  fetch(`/api/blogs?page=${currentPage}&limit=${POSTS_PER_PAGE}`)
+    .then((res) => res.json())
+    .then((data) => {
+      setBlogs(Array.isArray(data?.data) ? data.data : []);
+      setTotalPages(Number(data?.totalPages) || 1);
+    })
+    .catch(() => {
+      setBlogs([]);
+      setTotalPages(1);
+    });
+}, [currentPage]);
 
   /* -------------------- FILTER LOGIC -------------------- */
-  const filteredBlogs = blogs.filter((post) => {
+  const filteredBlogs = (blogs ?? []).filter((post) => {
+
     return (
       (!month || post.month === month) &&
       (!category || post.category === category) &&

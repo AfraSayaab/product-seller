@@ -1,9 +1,8 @@
-//src\app\(protected)\admin\blog\edit\[id]\page.tsx
 "use client";
 
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import PostForm, { BlogFormData } from "@/components/admin/blog/postform";
+import PostForm, { BlogFormData, Category } from "@/components/admin/blog/postform";
 import { toast } from "sonner";
 
 export default function EditPostPage() {
@@ -21,6 +20,7 @@ export default function EditPostPage() {
     image: null,
     imageAlt: "",
     isPublished: false,
+    categoryId: undefined,
   });
 
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -28,21 +28,29 @@ export default function EditPostPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const [categories, setCategories] = useState<Category[]>([]); // 🔥 must fetch categories
+
+  // Fetch blog data
 useEffect(() => {
   if (!id || Array.isArray(id)) return;
 
   const loadBlog = async () => {
     setIsLoading(true);
-
     try {
-      const res = await fetch(`/api/admin/blogs/${id}`);
-      if (!res.ok) {
-        throw new Error(
-          res.status === 404 ? "Blog not found" : "Failed to fetch blog"
-        );
-      }
+      const [blogRes, catRes] = await Promise.all([
+        fetch(`/api/admin/blogs/${id}`),
+        fetch("/api/admin/categories"),
+      ]);
 
-      const blog = await res.json();
+      if (!blogRes.ok) throw new Error(blogRes.status === 404 ? "Blog not found" : "Failed to fetch blog");
+      if (!catRes.ok) throw new Error("Failed to fetch categories");
+
+      const blog = await blogRes.json();
+
+      const catsRes = await catRes.json();
+      const cats: Category[] = Array.isArray(catsRes.data?.items) ? catsRes.data.items : [];
+
+      setCategories(cats);
 
       setFormData({
         title: blog.title,
@@ -55,24 +63,22 @@ useEffect(() => {
         image: blog.image ?? null,
         imageAlt: blog.image_alt ?? "",
         isPublished: Boolean(blog.is_published),
+        categoryId: blog.category_id ?? undefined,
       });
 
       setImagePreview(blog.image ?? null);
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Failed to fetch blog"
-      );
-      router.replace("/admin/blog/manage"); // safe
+      toast.error(err instanceof Error ? err.message : "Failed to load blog");
+      router.replace("/admin/blog/manage");
     } finally {
       setIsLoading(false);
     }
   };
 
   loadBlog();
-}, [id, router]); // <-- added router here
+}, [id, router]);
 
-
-  // Auto-slug
+  // Auto-generate slug
   useEffect(() => {
     if (autoSlug && formData.title) {
       const slug = formData.title
@@ -83,52 +89,42 @@ useEffect(() => {
     }
   }, [formData.title, autoSlug]);
 
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setIsSubmitting(true);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
 
-  try {
-    const fd = new FormData();
+    try {
+      const fd = new FormData();
+      fd.append("title", formData.title);
+      fd.append("slug", formData.slug);
+      fd.append("metaTitle", formData.metaTitle);
+      fd.append("metaDescription", formData.metaDescription);
+      fd.append("keywords", formData.keywords);
+      fd.append("schemaMarkup", formData.schemaMarkup);
+      fd.append("content", formData.content);
+      fd.append("imageAlt", formData.imageAlt);
+      fd.append("isPublished", String(formData.isPublished));
 
-    fd.append("title", formData.title);
-    fd.append("slug", formData.slug);
-    fd.append("metaTitle", formData.metaTitle);
-    fd.append("metaDescription", formData.metaDescription);
-    fd.append("keywords", formData.keywords);
-    fd.append("schemaMarkup", formData.schemaMarkup);
-    fd.append("content", formData.content);
-    fd.append("imageAlt", formData.imageAlt);
-    fd.append("isPublished", String(formData.isPublished));
+      if (formData.categoryId) fd.append("categoryId", String(formData.categoryId));
+      if (formData.image instanceof File) fd.append("image", formData.image);
 
-    // ✅ only append if user selected NEW image
-    if (formData.image instanceof File) {
-      fd.append("image", formData.image);
+      const res = await fetch(`/api/admin/blogs/${id}`, { method: "PATCH", body: fd });
+      if (!res.ok) throw new Error("Failed to update blog");
+
+      toast.success("Blog updated successfully 🎉");
+      router.push("/admin/blog/manage");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to update blog");
+    } finally {
+      setIsSubmitting(false);
     }
-
-    const res = await fetch(`/api/admin/blogs/${id}`, {
-      method: "PATCH",
-      body: fd,
-    });
-
-    if (!res.ok) throw new Error("Failed to update blog");
-
-    toast.success("Blog updated successfully 🎉");
-    router.push("/admin/blog/manage");
-  } catch (err) {
-  toast.error(err instanceof Error ? err.message : "Failed to update blog");
-
-  } finally {
-    setIsSubmitting(false);
-  }
-};
-
+  };
 
   const handleCancel = () => router.push("/admin/blog/manage");
 
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-4">Edit Blog Post</h1>
-
       {isLoading ? (
         <div className="text-gray-600">Loading blog data...</div>
       ) : (
@@ -143,6 +139,7 @@ const handleSubmit = async (e: React.FormEvent) => {
             isSubmitting={isSubmitting}
             onCancel={handleCancel}
             onSubmit={handleSubmit}
+            categories={categories} // 🔥 must pass categories
           />
         </div>
       )}

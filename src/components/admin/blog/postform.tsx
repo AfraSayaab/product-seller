@@ -1,5 +1,4 @@
 "use client";
-//src\components\admin\blog\postform.tsx
 import * as React from "react";
 import { Editor } from "@tinymce/tinymce-react";
 import Image from "next/image";
@@ -12,9 +11,15 @@ export interface BlogFormData {
   keywords: string;
   schemaMarkup: string;
   content: string;
-  image: File | string | null;   // 🔥 FIX
+  image: File | string | null;
   imageAlt: string;
   isPublished: boolean;
+  categoryId?: number;
+}
+
+export interface Category {
+  id: number;
+  name: string;
 }
 
 interface PostFormProps {
@@ -27,6 +32,7 @@ interface PostFormProps {
   isSubmitting: boolean;
   onCancel: () => void;
   onSubmit: (e: React.FormEvent) => void;
+  categories: Category[]; // 🔥 required
 }
 
 export default function PostForm({
@@ -39,18 +45,15 @@ export default function PostForm({
   isSubmitting,
   onCancel,
   onSubmit,
+  categories, // 🔥 destructured
 }: PostFormProps) {
+
   /* ---------------- Image Upload (Preview Only) ---------------- */
- const handleImageChange = (file: File | null) => {
-  if (!file) return;
-
-  setImagePreview(URL.createObjectURL(file)); // preview only
-  setFormData((prev) => ({
-    ...prev,
-    image: file, // ✅ store FILE, not URL
-  }));
-};
-
+  const handleImageChange = (file: File | null) => {
+    if (!file) return;
+    setImagePreview(URL.createObjectURL(file));
+    setFormData((prev) => ({ ...prev, image: file }));
+  };
 
   return (
     <form onSubmit={onSubmit} className="space-y-8 p-6">
@@ -96,6 +99,30 @@ export default function PostForm({
         />
       </div>
 
+      {/* Category Dropdown */}
+      <div className="space-y-2">
+        <label className="text-sm font-bold">
+          Category <span className="text-red-600">*</span>
+        </label>
+        <select
+          value={formData.categoryId ?? ""}
+          onChange={(e) =>
+            setFormData((p) => ({ ...p, categoryId: Number(e.target.value) }))
+          }
+          required
+          disabled={isSubmitting}
+          className="w-full rounded-lg border px-4 py-3"
+        >
+          <option value="">Select a category</option>
+          {categories.map((cat) => (
+  <option key={cat.id} value={cat.id}>
+    {cat.name}
+  </option>
+))}
+
+        </select>
+      </div>
+
       {/* SEO Metadata */}
       <div className="space-y-4 border-t pt-6">
         <h3 className="font-bold">SEO Metadata</h3>
@@ -133,49 +160,22 @@ export default function PostForm({
       <div className="space-y-2">
         <label className="text-sm font-bold">Post Content</label>
         <Editor
-  apiKey={process.env.NEXT_PUBLIC_TINYMCE_API_KEY}
-  value={formData.content}
-  onEditorChange={(value) => setFormData((p) => ({ ...p, content: value }))}
-  init={{
-    height: 600,
-    menubar: true,
-    plugins: [
-      "advlist autolink autosave charmap code codesample directionality emoticons fullscreen help image importcss link lists liststyle media nonbreaking pagebreak preview quickbars save searchreplace table visualblocks visualchars wordcount toc anchor template"
-    ],
-    toolbar: [
-      "undo redo | styleselect | bold italic underline strikethrough | alignleft aligncenter alignright alignjustify | bullist numlist | outdent indent | blockquote | link image media | table | codesample code | charmap emoticons | fullscreen preview | save searchreplace | anchor toc | template"
-    ],
-    toolbar_mode: "floating",
-    contextmenu: "link image imagetools table",
-    quickbars_selection_toolbar: "bold italic | quicklink h2 h3 blockquote",
-    quickbars_insert_toolbar: "quicktable image media codesample",
-    autosave_interval: "30s",
-    image_advtab: true,
-    importcss_append: true,
-    content_style: "body { font-family:Helvetica,Arial,sans-serif; font-size:14px }",
-
-    /* ---------------- Two-column template ---------------- */
-    templates: [
-      {
-        title: "Two Columns",
-        description: "Insert a two-column layout",
-        content: `
-          <div style="display: flex; gap: 20px;">
-            <div style="flex: 1; padding: 10px; border: 1px solid #ddd;">Left Column Content</div>
-            <div style="flex: 1; padding: 10px; border: 1px solid #ddd;">Right Column Content</div>
-          </div>
-        `
-      }
-    ]
-  }}
-/>
-
+          apiKey={process.env.NEXT_PUBLIC_TINYMCE_API_KEY}
+          value={formData.content}
+          onEditorChange={(value) => setFormData((p) => ({ ...p, content: value }))}
+          init={{
+            height: 600,
+            menubar: true,
+            plugins: "advlist autolink autosave charmap code codesample link lists media table preview quickbars",
+            toolbar: "undo redo | styleselect | bold italic | alignleft aligncenter alignright | bullist numlist | link image media | table | codesample",
+         
+          }}
+        />
       </div>
 
       {/* Featured Image */}
       <div className="space-y-3">
         <label className="text-sm font-bold">Featured Image</label>
-
         <label className="block w-50 border border-gray-300 rounded-lg px-4 py-2 cursor-pointer hover:bg-gray-50">
           <span className="text-sm text-gray-600">
             {imagePreview ? "Change Image" : "Choose File"}
@@ -187,7 +187,6 @@ export default function PostForm({
             onChange={(e) => e.target.files && handleImageChange(e.target.files[0])}
           />
         </label>
-
         {imagePreview && (
           <Image
             src={imagePreview}
@@ -197,7 +196,6 @@ export default function PostForm({
             className="rounded-lg object-cover"
           />
         )}
-
         <input
           placeholder="Alt text"
           value={formData.imageAlt}

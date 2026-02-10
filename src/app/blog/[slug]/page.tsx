@@ -40,14 +40,16 @@ export default async function BlogPostPage({ params }: PageProps) {
           <div className="flex-1">
             <BlogContent content={post.content} />
 
-            <div className="relative w-full h-64 mt-6 rounded-lg overflow-hidden">
-              <Image
-                src={post.image}
-                alt={post.title}
-                fill
-                className="object-cover"
-              />
-            </div>
+            <div className="relative w-full h-[500px] mt-6 rounded-lg overflow-hidden bg-gray-100">
+  <Image
+    src={post.image}
+    alt={post.title}
+    fill
+    className="object-contain"
+    sizes="(max-width: 768px) 100vw, 700px"
+  />
+</div>
+
           </div>
 
           {/* Sidebar */}
@@ -64,7 +66,11 @@ export default async function BlogPostPage({ params }: PageProps) {
           </aside>
         </div>
 
-        <RelatedPosts />
+        <RelatedPosts
+  category={post.category}
+  currentSlug={post.slug}
+/>
+
       </main>
       <Footer />
     </>
