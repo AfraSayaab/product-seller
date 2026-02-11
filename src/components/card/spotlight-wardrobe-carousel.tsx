@@ -19,16 +19,65 @@ export default function SpotlightWardrobeCarousel() {
     Autoplay({ delay: 3500, stopOnInteraction: true, stopOnMouseEnter: true })
   );
 
-  // ✅ this component makes its own API call
+  // Fetch spotlight listings
   const { data, loading, error } = usePublicListings({
     spotlight: true,
     sort: "featured",
     limit: 16,
   });
 
+  // Local state to track listings with favourited info
+  const [listings, setListings] = React.useState<any[]>([]);
+
+  // Fetch user favourites on mount and mark listings
+  React.useEffect(() => {
+    async function loadFavourites() {
+      try {
+        const res = await fetch("/api/favourites");
+        const favData = await res.json();
+
+        if (favData.success && data) {
+          const favIds = new Set(favData.data.items.map((f: any) => f.id));
+          const updated = data.map((item: any) => ({
+            ...item,
+            favorited: favIds.has(item.id),
+          }));
+          setListings(updated);
+        } else {
+          setListings(data ?? []);
+        }
+      } catch (err) {
+        console.error("Failed to fetch favourites:", err);
+        setListings(data ?? []);
+      }
+    }
+
+    if (data) {
+      loadFavourites();
+    }
+  }, [data]);
+
+  // Callback when favourite is toggled
+  const handleFavouriteChange = (id: number, isFav: boolean) => {
+    setListings((prev) =>
+      prev.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              favorited: isFav,
+              favoritesCount: isFav
+                ? (item.favoritesCount ?? 0) + 1
+                : Math.max((item.favoritesCount ?? 1) - 1, 0),
+            }
+          : item
+      )
+    );
+  };
+
   return (
     <section className="w-full py-10">
       <div className="mx-auto max-w-7xl px-4">
+        {/* Header */}
         <div className="mb-6 text-center">
           <p className="text-sm font-medium text-rose-500">Explore Our Highlights</p>
           <h2 className="mt-2 text-4xl font-extrabold tracking-tight text-pink-500 md:text-5xl">
@@ -38,15 +87,24 @@ export default function SpotlightWardrobeCarousel() {
           {error && <p className="mt-2 text-sm text-rose-600">{error}</p>}
         </div>
 
+        {/* Carousel */}
         <div className="relative">
           <Carousel opts={{ align: "start", loop: true }} plugins={[autoplay.current]} className="w-full">
             <CarouselContent className="-ml-4">
-              {(loading ? Array.from({ length: 8 }) : data).map((item: any, idx) => (
+              {(loading ? Array.from({ length: 8 }) : listings).map((item: any, idx) => (
                 <CarouselItem
                   key={item?.id ?? idx}
                   className="pl-4 basis-[88%] sm:basis-1/2 lg:basis-1/3 xl:basis-1/4"
                 >
-                  {loading ? <ListingCardSkeleton /> : <ListingCard item={item} cardtype="SPOTLIGHT"/>}
+                  {loading ? (
+                    <ListingCardSkeleton />
+                  ) : (
+                    <ListingCard
+                      item={item}
+                      cardtype="SPOTLIGHT"
+                      onFavouriteChange={(isFav) => handleFavouriteChange(item.id, isFav)}
+                    />
+                  )}
                 </CarouselItem>
               ))}
             </CarouselContent>

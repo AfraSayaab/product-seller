@@ -63,6 +63,7 @@ export async function DELETE(req: NextRequest, ctx: { params: Promise<{ listingI
     });
 
     return NextResponse.json(ok({ removed: true }));
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (e: any) {
     console.error("DELETE /api/favourites/[listingId] error:", e);
     if (e.message?.includes("Invalid listing ID")) {

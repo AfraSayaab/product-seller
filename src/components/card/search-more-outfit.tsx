@@ -12,11 +12,59 @@ export default function SearchMoreOutfit() {
   const viewAllHref = "/listings";
   const limit = 8;
 
-  // ✅ separate API call for THIS component
+  // Fetch newest listings
   const { data, loading, error } = usePublicListings({
     sort: "newest",
     limit,
   });
+
+  // Local state for listings with favourited info
+  const [listings, setListings] = React.useState<any[]>([]);
+
+  // Fetch user favourites on mount and mark items
+  React.useEffect(() => {
+    async function loadFavourites() {
+      try {
+        const res = await fetch("/api/favourites");
+        const favData = await res.json();
+
+        if (favData.success && data) {
+          const favIds = new Set(favData.data.items.map((f: any) => f.id));
+          const updated = data.map((item: any) => ({
+            ...item,
+            favorited: favIds.has(item.id),
+          }));
+          setListings(updated);
+        } else {
+          setListings(data ?? []);
+        }
+      } catch (err) {
+        console.error("Failed to fetch favourites:", err);
+        setListings(data ?? []);
+      }
+    }
+
+    if (data) {
+      loadFavourites();
+    }
+  }, [data]);
+
+  // Callback when favourite toggled
+  const handleFavouriteChange = (id: number, isFav: boolean) => {
+    setListings((prev) =>
+      prev.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              favorited: isFav,
+              favoritesCount: isFav
+                ? (item.favoritesCount ?? 0) + 1
+                : Math.max((item.favoritesCount ?? 1) - 1, 0),
+            }
+          : item
+      )
+    );
+  };
 
   return (
     <section className="w-full py-10">
@@ -32,18 +80,20 @@ export default function SearchMoreOutfit() {
           {error && <p className="mt-2 text-sm text-rose-600">{error}</p>}
         </div>
 
-        {/* Grid - always 8 cards (or 8 skeletons while loading) */}
+        {/* Grid */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {loading
-            ? Array.from({ length: limit }).map((_, i) => (
-                <ListingCardSkeleton key={i} />
-              ))
-            : (data ?? []).slice(0, limit).map((item) => (
-                <ListingCard key={item.id} item={item} />
+            ? Array.from({ length: limit }).map((_, i) => <ListingCardSkeleton key={i} />)
+            : listings.slice(0, limit).map((item) => (
+                <ListingCard
+                  key={item.id}
+                  item={item}
+                  onFavouriteChange={(isFav) => handleFavouriteChange(item.id, isFav)}
+                />
               ))}
         </div>
 
-        {/* Footer - View all button */}
+        {/* Footer */}
         <div className="mt-8 flex items-center justify-center">
           <Button variant="outline" asChild className="rounded-xl">
             <Link href={viewAllHref}>View all</Link>

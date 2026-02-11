@@ -105,6 +105,7 @@ export async function GET(req: NextRequest) {
         },
       })
     );
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (e: any) {
     console.error("GET /api/favourites error:", e);
     return NextResponse.json(fail(e?.message || "Failed to fetch favourites"), { status: 500 });
@@ -177,6 +178,7 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json(ok({ added: true }), { status: 201 });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (e: any) {
     console.error("POST /api/favourites error:", e);
     // Handle unique constraint violation

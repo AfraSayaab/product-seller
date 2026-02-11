@@ -19,12 +19,59 @@ export default function FeaturedWardrobeCarousel() {
     Autoplay({ delay: 3500, stopOnInteraction: true, stopOnMouseEnter: true })
   );
 
-  // ✅ this component makes its own API call
   const { data, loading, error } = usePublicListings({
     featured: true,
     sort: "featured",
     limit: 16,
   });
+
+  // Local state for listings, includes favorited
+  const [listings, setListings] = React.useState<any[]>([]);
+
+  // Fetch user favourites on mount
+  React.useEffect(() => {
+    async function loadFavourites() {
+      try {
+        const res = await fetch("/api/favourites");
+        const favData = await res.json();
+        if (favData.success && data) {
+          const favIds = new Set(favData.data.items.map((f: any) => f.id));
+          // Map data and mark favorited
+          const updated = data.map((item: any) => ({
+            ...item,
+            favorited: favIds.has(item.id),
+          }));
+          setListings(updated);
+        } else {
+          setListings(data ?? []);
+        }
+      } catch (err) {
+        console.error("Failed to fetch favourites:", err);
+        setListings(data ?? []);
+      }
+    }
+
+    if (data) {
+      loadFavourites();
+    }
+  }, [data]);
+
+  // Callback when favourite toggled
+  const handleFavouriteChange = (id: number, isFav: boolean) => {
+    setListings((prev) =>
+      prev.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              favorited: isFav,
+              favoritesCount: isFav
+                ? (item.favoritesCount ?? 0) + 1
+                : Math.max((item.favoritesCount ?? 1) - 1, 0),
+            }
+          : item
+      )
+    );
+  };
 
   return (
     <section className="w-full py-10">
@@ -41,12 +88,20 @@ export default function FeaturedWardrobeCarousel() {
         <div className="relative">
           <Carousel opts={{ align: "start", loop: true }} plugins={[autoplay.current]} className="w-full">
             <CarouselContent className="-ml-4">
-              {(loading ? Array.from({ length: 8 }) : data).map((item: any, idx) => (
+              {(loading ? Array.from({ length: 8 }) : listings).map((item: any, idx) => (
                 <CarouselItem
                   key={item?.id ?? idx}
                   className="pl-4 basis-[88%] sm:basis-1/2 lg:basis-1/3 xl:basis-1/4"
                 >
-                  {loading ? <ListingCardSkeleton /> : <ListingCard item={item} cardtype="FEATURED"/>}
+                  {loading ? (
+                    <ListingCardSkeleton />
+                  ) : (
+                    <ListingCard
+                      item={item}
+                      cardtype="FEATURED"
+                      onFavouriteChange={(isFav) => handleFavouriteChange(item.id, isFav)}
+                    />
+                  )}
                 </CarouselItem>
               ))}
             </CarouselContent>

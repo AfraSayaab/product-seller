@@ -10,7 +10,7 @@ import type { PublicListingDTO } from "@/lib/listing-types";
 export default function ListingsGridPaginated() {
   const PAGE_SIZE = 30;
 
-  const [items, setItems] = React.useState<PublicListingDTO[]>([]);
+  const [items, setItems] = React.useState<(PublicListingDTO & { favorited?: boolean })[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -18,19 +18,37 @@ export default function ListingsGridPaginated() {
   const [cursorStack, setCursorStack] = React.useState<(string | null)[]>([null]);
   const currentCursor = cursorStack[cursorStack.length - 1] ?? null;
 
+  // Fetch listings
   const loadPage = React.useCallback(async (cursor: string | null) => {
     try {
       setLoading(true);
       setError(null);
 
+      // Fetch listings
       const res = await fetchPublicListings({
         sort: "newest",
         limit: PAGE_SIZE,
         cursor,
       });
 
-      setItems(res.data);
+      let listings = res.data;
+
+      // Fetch user favourites
+      const favRes = await fetch("/api/favourites");
+      const favData = await favRes.json();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const favIds = favData.data?.items?.map((f: any) => f.id) || [];
+
+      // Mark which listings are already favourited
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      listings = listings.map((item: any) => ({
+        ...item,
+        favorited: favIds.includes(item.id),
+      }));
+
+      setItems(listings);
       setNextCursor(res.meta.nextCursor);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
       setError(e?.message ?? "Failed to load listings");
       setItems([]);
@@ -57,6 +75,15 @@ export default function ListingsGridPaginated() {
     setCursorStack((prev) => prev.slice(0, -1));
   }
 
+  // Callback to update the item's favourited state in the grid
+  const handleToggleFavourite = (listingId: number, isFav: boolean) => {
+    setItems((prev) =>
+      prev.map((item) =>
+        item.id === listingId ? { ...item, favorited: isFav } : item
+      )
+    );
+  };
+
   return (
     <section className="w-full">
       <div className="mx-auto max-w-7xl">
@@ -76,7 +103,17 @@ export default function ListingsGridPaginated() {
             ? Array.from({ length: PAGE_SIZE }).map((_, i) => (
                 <ListingCardSkeleton key={i} />
               ))
-            : items.map((item) => <ListingCard key={item.id} item={item} />)}
+            : items.map((item) => (
+                <ListingCard
+                  key={item.id}
+                  item={item}
+                  cardtype=""
+                  // Pass callback to update grid state
+                  onFavouriteChange={(isFav: boolean) =>
+                    handleToggleFavourite(item.id, isFav)
+                  }
+                />
+              ))}
         </div>
 
         {/* Pagination */}
@@ -89,7 +126,6 @@ export default function ListingsGridPaginated() {
           >
             Previous
           </Button>
-
           <Button className="rounded-xl" onClick={onNext} disabled={!canNext}>
             Next
           </Button>

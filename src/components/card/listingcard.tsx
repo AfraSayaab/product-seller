@@ -9,15 +9,66 @@ import { Button } from "@/components/ui/button";
 import { Heart } from "lucide-react";
 import type { PublicListingDTO } from "@/lib/listing-types";
 
-function money(price: string, currency: string) {
-  // Keep simple; if you want locale formatting later, do it here.
-  return `£ ${price}`;
+interface ListingCardProps {
+  item: PublicListingDTO & { favorited?: boolean };
+  cardtype?: string;
+  onFavouriteChange?: (isFav: boolean) => void; // callback for parent
 }
 
-export function ListingCard({ item, cardtype }: { item: PublicListingDTO; cardtype?: string }) {
-  const [liked, setLiked] = React.useState(false);
+export function ListingCard({ item, cardtype, onFavouriteChange }: ListingCardProps) {
+const [liked, setLiked] = React.useState<boolean>(!!item.favorited);
+
+// ✅ keep heart in sync with parent updates
+React.useEffect(() => {
+  setLiked(!!item.favorited);
+}, [item.favorited]);
+
+  const [loading, setLoading] = React.useState(false);
 
   const href = `/listings/${item.id}`;
+
+  const money = (price: number | string, currency: string) =>
+    `£ ${currency} ${Number(price).toLocaleString()}`;
+
+  const toggleFavourite = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (loading) return;
+    setLoading(true);
+
+    try {
+      let res;
+      if (!liked) {
+        // Add to favourites
+        res = await fetch("/api/favourites", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ listingId: Number(item.id) }),
+        });
+      } else {
+        // Remove from favourites
+        res = await fetch(`/api/favourites/${item.id}`, {
+          method: "DELETE",
+        });
+      }
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.error("API error:", data.message ?? data);
+        return;
+      }
+
+      // Update state
+      setLiked(!liked);
+      onFavouriteChange?.(!liked); // notify parent grid
+    } catch (error) {
+      console.error("toggleFavourite error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <Link href={href} className="block">
@@ -35,7 +86,7 @@ export function ListingCard({ item, cardtype }: { item: PublicListingDTO; cardty
             {money(item.price, item.currency)}
           </Badge>
 
-          {(cardtype) && (
+          {cardtype && (
             <span className="absolute right-3 top-3 rounded-md bg-white/95 px-2.5 py-1 text-xs font-semibold tracking-wide text-pink-600 shadow-sm ring-1 ring-black/5">
               {cardtype}
             </span>
@@ -46,23 +97,20 @@ export function ListingCard({ item, cardtype }: { item: PublicListingDTO; cardty
               type="button"
               size="icon"
               variant="secondary"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setLiked((v) => !v);
-              }}
+              onClick={toggleFavourite}
               className="h-10 w-10 rounded-full bg-white/95 shadow-sm ring-1 ring-black/5 hover:bg-white"
-              aria-label="Add to favourite"
+              aria-label={liked ? "Remove from favourite" : "Add to favourite"}
+              disabled={loading}
             >
-              <Heart className={`h-5 w-5 ${liked ? "fill-rose-500 text-rose-500" : "text-rose-500"}`} />
+              <Heart
+                className={`h-5 w-5 ${liked ? "fill-rose-500 text-rose-500" : "text-rose-500"}`}
+              />
             </Button>
           </div>
         </div>
 
         <div className="p-5">
-          <h3 className="line-clamp-1 text-base font-semibold text-foreground">
-            {item.title}
-          </h3>
+          <h3 className="line-clamp-1 text-base font-semibold text-foreground">{item.title}</h3>
           <p className="mt-2 text-sm text-muted-foreground">
             {item.category?.name ?? "Uncategorized"}
           </p>

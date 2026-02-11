@@ -6,6 +6,7 @@ import { ListingCard } from "./listingcard";
 import { ListingCardSkeleton } from "./CardSkeleton";
 import { fetchPublicListings } from "@/lib/listing-client";
 import type { PublicListingDTO } from "@/lib/listing-types";
+
 export default function SpotlightWardrobeGrid() {
   const PAGE_SIZE = 12;
 
@@ -20,6 +21,7 @@ export default function SpotlightWardrobeGrid() {
   // Keep history so we can go Previous properly
   const [cursorStack, setCursorStack] = React.useState<(string | null)[]>([null]);
 
+  // Fetch page
   const loadPage = React.useCallback(async (pageCursor: string | null) => {
     try {
       setLoading(true);
@@ -32,7 +34,25 @@ export default function SpotlightWardrobeGrid() {
         cursor: pageCursor,
       });
 
-      setItems(res.data);
+      let updatedItems = res.data;
+
+      // ✅ Fetch favourites and mark items
+      try {
+        const favRes = await fetch("/api/favourites");
+        const favData = await favRes.json();
+
+        if (favData.success) {
+          const favIds = new Set(favData.data.items.map((f: any) => f.id));
+          updatedItems = updatedItems.map((item: any) => ({
+            ...item,
+            favorited: favIds.has(item.id),
+          }));
+        }
+      } catch (favErr) {
+        console.error("Failed to fetch favourites:", favErr);
+      }
+
+      setItems(updatedItems);
       setNextCursor(res.meta.nextCursor);
       setCursor(pageCursor);
     } catch (e: any) {
@@ -43,8 +63,7 @@ export default function SpotlightWardrobeGrid() {
   }, []);
 
   React.useEffect(() => {
-    // first page
-    loadPage(null);
+    loadPage(null); // first page
   }, [loadPage]);
 
   const canPrev = cursorStack.length > 1 && !loading;
@@ -63,6 +82,23 @@ export default function SpotlightWardrobeGrid() {
     loadPage(prevCursor);
   }
 
+  // Callback when favourite is toggled
+  const handleFavouriteChange = (id: number, isFav: boolean) => {
+    setItems((prev) =>
+      prev.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              favorited: isFav,
+              favoritesCount: isFav
+                ? (item.favoritesCount ?? 0) + 1
+                : Math.max((item.favoritesCount ?? 1) - 1, 0),
+            }
+          : item
+      )
+    );
+  };
+
   return (
     <section className="w-full py-6">
       <div className="mx-auto max-w-7xl">
@@ -80,7 +116,12 @@ export default function SpotlightWardrobeGrid() {
           {loading
             ? Array.from({ length: PAGE_SIZE }).map((_, i) => <ListingCardSkeleton key={i} />)
             : items.map((item) => (
-                <ListingCard key={item.id} item={item} cardtype="SPOTLIGHT" />
+                <ListingCard
+                  key={item.id}
+                  item={item}
+                  cardtype="SPOTLIGHT"
+                  onFavouriteChange={(isFav) => handleFavouriteChange(item.id, isFav)}
+                />
               ))}
         </div>
 
