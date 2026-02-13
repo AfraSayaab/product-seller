@@ -7,57 +7,81 @@ import { ListingCardSkeleton } from "./CardSkeleton";
 import { fetchPublicListings } from "@/lib/listing-client";
 import type { PublicListingDTO } from "@/lib/listing-types";
 
-export default function ListingsGridPaginated() {
+interface Props {
+  categorySlug?: string;
+  title?: string;
+  defaultSort?: string;
+}
+
+export default function ListingsGridPaginated({
+  categorySlug,
+  title,
+  defaultSort = "newest",
+}: Props) {
   const PAGE_SIZE = 30;
+
+  const SORT_OPTIONS = [
+    { label: "Newest", value: "newest" },
+    { label: "Oldest", value: "oldest" },
+    { label: "Price: Low to High", value: "price_asc" },
+    { label: "Price: High to Low", value: "price_desc" },
+    { label: "Most Popular", value: "popular" },
+  ];
 
   const [items, setItems] = React.useState<(PublicListingDTO & { favorited?: boolean })[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
-
   const [nextCursor, setNextCursor] = React.useState<string | null>(null);
   const [cursorStack, setCursorStack] = React.useState<(string | null)[]>([null]);
   const currentCursor = cursorStack[cursorStack.length - 1] ?? null;
+  const [sortBy, setSortBy] = React.useState(defaultSort);
 
   // Fetch listings
-  const loadPage = React.useCallback(async (cursor: string | null) => {
-    try {
-      setLoading(true);
-      setError(null);
+  const loadPage = React.useCallback(
+    async (cursor: string | null) => {
+      try {
+        setLoading(true);
+        setError(null);
 
-      // Fetch listings
-      const res = await fetchPublicListings({
-        sort: "newest",
-        limit: PAGE_SIZE,
-        cursor,
-      });
+        const res = await fetchPublicListings({
+          sort: sortBy,
+          limit: PAGE_SIZE,
+          cursor,
+          ...(categorySlug ? { categorySlug: [categorySlug] } : {}),
+        });
 
-      let listings = res.data;
+        let listings = res.data;
 
-      // Fetch user favourites
-      const favRes = await fetch("/api/favourites");
-      const favData = await favRes.json();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const favIds = favData.data?.items?.map((f: any) => f.id) || [];
+        // Fetch user favourites
+        const favRes = await fetch("/api/favourites");
+        const favData = await favRes.json();
+        const favIds = favData.data?.items?.map((f: any) => f.id) || [];
 
-      // Mark which listings are already favourited
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      listings = listings.map((item: any) => ({
-        ...item,
-        favorited: favIds.includes(item.id),
-      }));
+        // Mark favourited items
+        listings = listings.map((item: any) => ({
+          ...item,
+          favorited: favIds.includes(item.id),
+        }));
 
-      setItems(listings);
-      setNextCursor(res.meta.nextCursor);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (e: any) {
-      setError(e?.message ?? "Failed to load listings");
-      setItems([]);
-      setNextCursor(null);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+        setItems(listings);
+        setNextCursor(res.meta.nextCursor);
+      } catch (e: any) {
+        setError(e?.message ?? "Failed to load listings");
+        setItems([]);
+        setNextCursor(null);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [categorySlug, sortBy]
+  );
 
+  // Reset pagination when category or sort changes
+  React.useEffect(() => {
+    setCursorStack([null]);
+  }, [categorySlug, sortBy]);
+
+  // Load listings when cursor changes
   React.useEffect(() => {
     loadPage(currentCursor);
   }, [currentCursor, loadPage]);
@@ -75,7 +99,7 @@ export default function ListingsGridPaginated() {
     setCursorStack((prev) => prev.slice(0, -1));
   }
 
-  // Callback to update the item's favourited state in the grid
+  // Update favourite state in grid
   const handleToggleFavourite = (listingId: number, isFav: boolean) => {
     setItems((prev) =>
       prev.map((item) =>
@@ -87,14 +111,30 @@ export default function ListingsGridPaginated() {
   return (
     <section className="w-full">
       <div className="mx-auto max-w-7xl">
+        {/* Title */}
         <div className="mb-6 text-center">
           <h2 className="mt-2 text-4xl font-extrabold tracking-tight text-pink-500 md:text-5xl">
-            All Listings
+            {title ?? "All Listings"}
           </h2>
           <p className="mt-2 text-sm text-muted-foreground">
             Browse all items. Showing {PAGE_SIZE} per page.
           </p>
           {error && <p className="mt-3 text-sm text-rose-600">{error}</p>}
+        </div>
+
+        {/* Modern Filter Buttons */}
+        <div className="mb-6 flex flex-wrap justify-center gap-3">
+          {SORT_OPTIONS.map((opt) => (
+            <Button
+              key={opt.value}
+              size="sm"
+              variant={sortBy === opt.value ? "default" : "outline"}
+              onClick={() => setSortBy(opt.value)}
+              className="rounded-xl px-4 py-2"
+            >
+              {opt.label}
+            </Button>
+          ))}
         </div>
 
         {/* Grid */}
@@ -108,7 +148,6 @@ export default function ListingsGridPaginated() {
                   key={item.id}
                   item={item}
                   cardtype=""
-                  // Pass callback to update grid state
                   onFavouriteChange={(isFav: boolean) =>
                     handleToggleFavourite(item.id, isFav)
                   }
@@ -118,12 +157,7 @@ export default function ListingsGridPaginated() {
 
         {/* Pagination */}
         <div className="mt-10 flex items-center justify-center gap-3">
-          <Button
-            variant="outline"
-            className="rounded-xl"
-            onClick={onPrev}
-            disabled={!canPrev}
-          >
+          <Button variant="outline" className="rounded-xl" onClick={onPrev} disabled={!canPrev}>
             Previous
           </Button>
           <Button className="rounded-xl" onClick={onNext} disabled={!canNext}>

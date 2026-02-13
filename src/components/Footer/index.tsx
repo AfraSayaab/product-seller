@@ -18,7 +18,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 relative">
           
           {/* COLUMN 1 — ABOUT */}
-          <div className="space-y-6 pr-6 lg:pr-10 border-r border-pink-500/30">
+          <div className="space-y-6 pr-6 lg:pr-10 md:border-r md:border-pink-500/30">
             <h3 className="text-xl font-bold text-pink-500 tracking-wide">
               About Dazzle & Bloom
             </h3>
@@ -30,7 +30,7 @@ export default function Footer() {
             </p>
           </div>
 
-          <div className="space-y-4 px-6 border-r border-pink-500/30">
+          <div className="space-y-4 px-6 md:border-r md:border-pink-500/30">
   <h4 className="mb-4 text-sm font-semibold uppercase tracking-wider text-pink-500">
     Info
   </h4>
@@ -54,15 +54,15 @@ export default function Footer() {
     ))}
   </ul>
 </div>
-<div className="space-y-4 px-6 border-r border-pink-500/30">
+<div className="space-y-4 px-6 md:border-r md:border-pink-500/30">
   <h4 className="mb-4 text-sm font-semibold uppercase tracking-wider text-pink-500">
     Links
   </h4>
 
   <ul className="space-y-3 text-sm">
     {[
-      { label: "My Dashboard", href: "/dashboard" },
-      { label: "Submit Listing", href: "/submit-listing" },
+      { label: "My Dashboard", href: "/user" },
+      { label: "Submit Listing", href: "/submit-listing/" },
       { label: "Login", href: "/login" },
       { label: "Register", href: "/register" },
     ].map((item) => (
@@ -76,10 +76,7 @@ export default function Footer() {
       </li>
     ))}
   </ul>
-</div>
-
-
-         
+</div>  
           {/* COLUMN 4 — CATEGORIES + SOCIAL */}
           <div className="space-y-6 pl-6">
             <div>
@@ -87,10 +84,10 @@ export default function Footer() {
                 Top Categories
               </h4>
               <ul className="space-y-3 text-sm">
-                {["Men", "Women"].map((item) => (
-                  <li key={item}>
-                    <a href="#" className="transition hover:text-pink-500">
-                      {item}
+                {[{label:"Men", href: "/men/" }, {label:"Women", href: "/women/" }].map((item) => (
+                  <li key={item.label}>
+                    <a href={item.href} className="transition hover:text-pink-500">
+                      {item.label}
                     </a>
                   </li>
                 ))}
@@ -110,16 +107,19 @@ export default function Footer() {
 
             {/* SOCIAL ICONS */}
             <div className="flex gap-4 pt-2">
-              {[Instagram, Facebook, Twitter].map((Icon, i) => (
+              {[
+                { label: "Instagram", href: "https://www.instagram.com/dazzleandbloomuk/?hl=en", Icon: Instagram },
+                { label: "Facebook", href: "https://www.facebook.com/DazzleandBloomuk/", Icon: Facebook }
+              ].map((social) => (
                 <a
-                  key={i}
-                  href="#"
+                  key={social.label}
+                  href={social.href}
                   className="flex h-10 w-10 items-center justify-center rounded-full
                   bg-white/5 border border-white/10
                   transition-all duration-300
                   hover:bg-pink-500 hover:scale-110"
                 >
-                  <Icon className="h-5 w-5 text-white" />
+                  <social.Icon className="h-5 w-5 text-white" />
                 </a>
               ))}
             </div>

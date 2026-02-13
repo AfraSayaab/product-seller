@@ -1,6 +1,8 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import Autoplay from "embla-carousel-autoplay";
 import {
   Carousel,
@@ -119,6 +121,12 @@ export default function SpotlightWardrobeCarousel() {
             </div>
           </Carousel>
         </div>
+         {/* Footer */}
+                <div className="mt-8 flex items-center justify-center">
+                  <Button variant="outline" asChild className="rounded-xl">
+                    <Link href="/spotlight">View all</Link>
+                  </Button>
+                </div>
       </div>
     </section>
   );

@@ -40,7 +40,7 @@ export const Header = ({ onOpenMenu }: Props) => {
         </div>
 
         {/* Center: Nav Links (Desktop Only) */}
-        <nav className="hidden lg:flex gap-8 font-medium text-gray-800 uppercase tracking-wide">
+        {/* <nav className="hidden lg:flex gap-8 font-medium text-gray-800 uppercase tracking-wide">
           <Link href="/marketplace" className="hover:text-pink-500 transition">
             MARKETPLACE
           </Link>
@@ -50,7 +50,7 @@ export const Header = ({ onOpenMenu }: Props) => {
           <Link href="/for-business" className="hover:text-pink-500 transition">
             FOR BUSINESS
           </Link>
-        </nav>
+        </nav> */}
 
         {/* Right: Buttons */}
         <div className="flex items-center gap-4">
@@ -58,7 +58,7 @@ export const Header = ({ onOpenMenu }: Props) => {
             onClick={() => router.push("/ai-concierge")}
             className="hidden lg:inline-block bg-black text-white text-xs sm:text-sm font-semibold uppercase tracking-wide rounded-full px-4 py-2 hover:bg-pink-500 transition"
           >
-            AI CONCIERGE
+            Submit Listing
           </Button>
 
           <div className="flex items-center gap-2">
