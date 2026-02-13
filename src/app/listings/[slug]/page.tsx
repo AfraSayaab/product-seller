@@ -7,9 +7,7 @@ type ApiResponse<T> = { success: boolean; data?: T; message?: string };
 
 async function getListing(id: string): Promise<ApiResponse<any> | null> {
   const base =
-    process.env.NEXT_PUBLIC_APP_URL ||
-    process.env.NEXTAUTH_URL ||
-    "http://localhost:3000";
+    "https://dazzle-and-bloom.vercel.app";
 
   const res = await fetch(`${base}/api/listings/${id}`, { cache: "no-store" });
 
