@@ -9,6 +9,7 @@ export type PublicListingDTO = {
   featuredUntil: string | null;
   bumpedAt: string | null;
   createdAt: string;
+  favoritesCount: number; // Added field to indicate if the listing is favorited by the user
 
   category: { id: number; name: string; slug: string } | null;
   location: { country: string; state: string | null; city: string; area: string | null } | null;

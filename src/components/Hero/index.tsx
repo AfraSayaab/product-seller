@@ -10,7 +10,7 @@ import { SideDrawer } from "./SideDrawer";
 import { Backdrop } from "./Backdrop";
 
 export const HeroLanding = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(true);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
 
   // Auto-advance slider every 1s

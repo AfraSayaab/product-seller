@@ -45,7 +45,7 @@ export default function ListingHeader({ listing }: { listing: any }) {
 
       // ✅ optimistic UI update
       setLiked(!liked);
-      setFavCount((prev) => (liked ? Math.max(prev - 1, 0) : prev + 1));
+      setFavCount((prev:any) => (liked ? Math.max(prev - 1, 0) : prev + 1));
     } catch (err) {
       console.error("toggleFavourite failed", err);
     } finally {
