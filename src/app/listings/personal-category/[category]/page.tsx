@@ -1,6 +1,7 @@
 import Footer from "@/components/Footer";
 import { HeaderLayout } from "@/components/Header/header";
 import ListingsGridPaginated from "@/components/card/listings-grid-paginated";
+import ChildCategories from "@/components/categories/ChildCategories";
 
 interface Category {
   id: number;
@@ -12,7 +13,10 @@ interface Category {
 }
 
 // Recursive helper to find category by slug
-function findCategoryBySlug(categories: Category[], slug: string): Category | null {
+function findCategoryBySlug(
+  categories: Category[],
+  slug: string,
+): Category | null {
   for (const cat of categories) {
     if (cat.slug === slug) return cat;
     if (cat.children && cat.children.length > 0) {
@@ -45,25 +49,19 @@ export default async function PersonalCategoryPage({
 
   if (!selectedCategory) {
     return (
-      <div className="p-6 text-red-500">
-        Category - {category} not found
-      </div>
+      <div className="p-6 text-red-500">Category - {category} not found</div>
     );
   }
 
   return (
     <>
       <HeaderLayout />
-
-     
-
+    <ChildCategories parentCategory={selectedCategory} />
       <ListingsGridPaginated
-  categorySlug={selectedCategory.slug}
-  title={`${selectedCategory.name} Listings`}
-  defaultSort="newest"
-/>
-
-
+        categorySlug={selectedCategory.slug}
+        title={`${selectedCategory.name} Listings`}
+        defaultSort="newest"
+      />
       <Footer />
     </>
   );

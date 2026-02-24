@@ -8,6 +8,9 @@ export type ListingsQuery = {
   sort?: "newest" | "price_asc" | "price_desc" | "popular" | "featured";
   limit?: number;
   cursor?: string | null;
+  
+  minPrice?: number;
+  maxPrice?: number;
 };
 
 export async function fetchPublicListings(query: ListingsQuery) {
@@ -19,7 +22,11 @@ export async function fetchPublicListings(query: ListingsQuery) {
   if (typeof query.spotlight === "boolean") sp.set("spotlight", String(query.spotlight));
   if (query.limit) sp.set("limit", String(query.limit));
   if (query.cursor) sp.set("cursor", query.cursor);
+if (typeof query.minPrice === "number")
+  sp.set("minPrice", String(query.minPrice));
 
+if (typeof query.maxPrice === "number")
+  sp.set("maxPrice", String(query.maxPrice));
   (query.categorySlug ?? []).forEach((s) => sp.append("categorySlug", s));
 
   const res = await fetch(`/api/listings/public-listing?${sp.toString()}`, {

@@ -111,9 +111,9 @@ React.useEffect(() => {
 
         <div className="p-5">
           <h3 className="line-clamp-1 text-base font-semibold text-foreground">{item.title}</h3>
-          <p className="mt-2 text-sm text-muted-foreground">
+          <Link href={`/listings/personal-category/${item.category?.slug}`} className="mt-2 text-sm text-muted-foreground">
             {item.category?.name ?? "Uncategorized"}
-          </p>
+          </Link>
         </div>
       </Card>
     </Link>
